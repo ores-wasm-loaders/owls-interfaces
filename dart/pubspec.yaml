@@ -1,0 +1,6 @@
+name: owls_interfaces
+version: 0.1.0
+description: Immutable release contract types for shared WASM loaders.
+environment:
+  sdk: '>=3.6.0 <4.0.0'
+

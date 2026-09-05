@@ -1,0 +1,6 @@
+schema = 2
+[tasks.check]
+run = ["zed validate --require-lock", "cargo test --manifest-path rust/Cargo.toml --locked", "dart analyze dart"]
+[tasks.deps]
+run = ["zed install --frozen --adapter none", "cargo fetch --manifest-path rust/Cargo.toml --locked", "dart pub get --directory dart"]
+

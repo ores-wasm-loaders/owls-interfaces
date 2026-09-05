@@ -1,0 +1,11 @@
+.ores/
+.zed/
+.zed-pack/
+zed_modules/
+node_modules/
+target/
+.dart_tool/
+build/
+.env
+.env.*
+.DS_Store
