@@ -1,7 +1,7 @@
 [package]
 org = "ores-wasm-loaders"
 name = "owls-interfaces"
-version = "0.1.0"
+version = "0.1.1"
 description = "Release manifests and host contracts for shared WASM loaders"
 license = "MIT"
 
@@ -14,5 +14,5 @@ dir = "."
 [install]
 adapter = "none"
 [publish]
+include_readme = true
 exclude = [".ores/**", ".zed/**", ".zed-pack/**", "zed_modules/**", "node_modules/**", "**/target/**", "**/.dart_tool/**", "**/build/**"]
-
