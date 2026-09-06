@@ -1,95 +1,102 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://ores-wasm-loaders.github.io/schemas/release-v1.json",
+  "$id": "https://ores-wasm-loaders.github.io/schemas/release-v2.json",
   "title": "WASM application release",
+  "description": "The artifact an application publishes beside its build output and every host reads. v2 is a strict superset of v1: every v1 document validates, and the added fields describe what a host needs in order to prepare in the right order, budget the work, and know what activation means for this release.",
   "type": "object",
   "additionalProperties": false,
-  "required": [
-    "schemaVersion",
-    "appId",
-    "release",
-    "runtime",
-    "entrypoint",
-    "assets"
-  ],
+  "required": ["schemaVersion", "appId", "release", "runtime", "entrypoint", "assets"],
   "properties": {
-    "schemaVersion": {
-      "const": 1
-    },
-    "appId": {
-      "type": "string",
-      "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
-    },
+    "schemaVersion": { "enum": [1, 2] },
+    "appId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,63}$" },
     "release": {
+      "description": "Immutable release identifier. Never reused: a host refuses a release id it has already seen describing different assets.",
       "type": "string",
       "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
     },
     "runtime": {
-      "enum": [
-        "raw-wasm",
-        "wasm-bindgen",
-        "flutter-web"
-      ]
+      "description": "How bytes become a running instance — the host execution contract.",
+      "enum": ["raw-wasm", "wasm-bindgen", "flutter-web"]
     },
-    "entrypoint": {
+    "framework": {
+      "description": "Which activation shape this release expects, when the runtime alone does not say. Leptos and Dioxus are both wasm-bindgen runtimes that activate differently.",
+      "enum": ["leptos", "dioxus", "flutter", "none"]
+    },
+    "toolchain": {
+      "description": "What produced the build, e.g. `wasm-bindgen 0.2.95 / leptos 0.7` or `flutter 3.35.1 (wasm)`.",
       "type": "string",
       "minLength": 1,
       "maxLength": 128
+    },
+    "entrypoint": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "requiresCrossOriginIsolation": {
+      "description": "True only for Flutter's multi-threaded renderer. Not a property of WebAssembly in general, and never applied fleet-wide by reflex.",
+      "type": "boolean"
     },
     "assets": {
       "type": "array",
       "minItems": 1,
       "maxItems": 512,
-      "items": {
-        "$ref": "#/$defs/asset"
+      "items": { "$ref": "#/$defs/asset" }
+    },
+    "prepareBudget": {
+      "description": "What a page is allowed to spend preparing this release before the visitor asks for it.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["maxBytes", "maxConcurrency", "furthestStage"],
+      "properties": {
+        "maxBytes": { "type": "integer", "minimum": 0, "maximum": 268435456 },
+        "maxConcurrency": { "type": "integer", "minimum": 1, "maximum": 16 },
+        "furthestStage": {
+          "description": "How far preparation may go. `compile` is optional and only useful where the runtime's init can accept a compiled module.",
+          "enum": ["fetch", "compile"]
+        }
       }
     },
-    "extensions": {
-      "type": "object"
-    }
+    "activation": {
+      "description": "What activation does once preparation is complete.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode"],
+      "properties": {
+        "mode": { "enum": ["attach-view", "hydrate-islands", "mount-route", "run-app"] },
+        "hostSelector": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "islands": {
+          "description": "Leptos: the island components this release hydrates.",
+          "type": "array",
+          "items": { "type": "string", "minLength": 1, "maxLength": 128 },
+          "maxItems": 256
+        },
+        "routes": {
+          "description": "Dioxus: route path -> chunk asset id, as emitted by the framework's own splitter.",
+          "type": "object"
+        }
+      }
+    },
+    "extensions": { "type": "object" }
   },
   "$defs": {
     "asset": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "id",
-        "url",
-        "kind",
-        "bytes",
-        "sha256",
-        "prepare"
-      ],
+      "required": ["id", "url", "kind", "bytes", "sha256", "prepare"],
       "properties": {
-        "id": {
-          "type": "string",
-          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
-        },
-        "url": {
-          "type": "string",
-          "pattern": "^https://[^\\s]+$",
-          "maxLength": 4096
-        },
-        "kind": {
-          "enum": [
-            "wasm",
-            "module",
-            "script",
-            "data",
-            "font"
-          ]
-        },
-        "bytes": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 268435456
-        },
-        "sha256": {
-          "type": "string",
-          "pattern": "^[0-9a-f]{64}$"
-        },
+        "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+        "url": { "type": "string", "pattern": "^https://[^\\s]+$", "maxLength": 4096 },
+        "kind": { "enum": ["wasm", "module", "script", "data", "font"] },
+        "bytes": { "type": "integer", "minimum": 1, "maximum": 268435456 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
         "prepare": {
+          "description": "Whether this asset may be fetched speculatively at all. The v1 authority on preparability, kept as-is.",
           "type": "boolean"
+        },
+        "role": {
+          "description": "The part this file plays in startup. Lets a host prepare the variant a runtime will actually use instead of every variant.",
+          "enum": ["bootstrap", "glue", "module", "fallback", "chunk", "asset"]
+        },
+        "stage": {
+          "description": "How eagerly a preparable asset may be taken. Absent means it is derived from `prepare`: true -> critical, false -> lazy.",
+          "enum": ["critical", "optional", "lazy"]
         }
       }
     }

@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 2,
+  "appId": "owl-fixture-leptos",
+  "release": "2026.09.05-9d8e7f6",
+  "runtime": "wasm-bindgen",
+  "framework": "leptos",
+  "toolchain": "wasm-bindgen 0.2.95 / leptos 0.7 (islands)",
+  "entrypoint": "islands.js",
+  "requiresCrossOriginIsolation": false,
+  "assets": [
+    {
+      "id": "islands.js",
+      "url": "https://assets.ores-wasm-loaders.test/releases/owl-fixture-leptos/2026.09.05-9d8e7f6/islands.js",
+      "kind": "module",
+      "bytes": 48000,
+      "sha256": "afa29897c10825072484e9969855357e4a7a68912088f264943e8a5002e6c7a1",
+      "prepare": true,
+      "role": "glue",
+      "stage": "critical"
+    },
+    {
+      "id": "islands_bg.wasm",
+      "url": "https://assets.ores-wasm-loaders.test/releases/owl-fixture-leptos/2026.09.05-9d8e7f6/islands_bg.wasm",
+      "kind": "wasm",
+      "bytes": 780000,
+      "sha256": "f3bf7acd159079b5af363d7b889fec2aac29abe49e1da7dd714b8fa383ab5eeb",
+      "prepare": true,
+      "role": "module",
+      "stage": "critical"
+    },
+    {
+      "id": "islands.css",
+      "url": "https://assets.ores-wasm-loaders.test/releases/owl-fixture-leptos/2026.09.05-9d8e7f6/islands.css",
+      "kind": "data",
+      "bytes": 18000,
+      "sha256": "701bbb10e54904e7c2df20e76bd81a2a0ad84845ad15e6a0646b7a4eaed0d04d",
+      "prepare": true,
+      "role": "asset",
+      "stage": "critical"
+    },
+    {
+      "id": "snippets-status-ticker.js",
+      "url": "https://assets.ores-wasm-loaders.test/releases/owl-fixture-leptos/2026.09.05-9d8e7f6/snippets/status-ticker.js",
+      "kind": "module",
+      "bytes": 6000,
+      "sha256": "6b3493b011b5bf0b9811cc32a512fbdbae81210d9cf07b252726a4b17380e500",
+      "prepare": true,
+      "role": "asset",
+      "stage": "optional"
+    }
+  ],
+  "prepareBudget": {
+    "maxBytes": 852000,
+    "maxConcurrency": 3,
+    "furthestStage": "compile"
+  },
+  "activation": {
+    "mode": "hydrate-islands",
+    "islands": [
+      "PricingCalculator",
+      "SignupWizard",
+      "StatusTicker"
+    ]
+  }
+}
