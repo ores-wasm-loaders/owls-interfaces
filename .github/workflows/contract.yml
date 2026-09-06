@@ -19,3 +19,24 @@ jobs:
           node-version: '22'
       - name: Run release contract and browser-entry tests
         run: node --test test/*.test.mjs
+
+  peer-authority-parity:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate comparison-only Schema B and compare both authorities
+        uses: ORESoftware/typespec-json-schema-validator@3822508a667d36f9e094f84aa57b1b2944230852
+        with:
+          typespec: contracts/main.tsp
+          schema: schemas/release.schema.json
+          report: .typespec-json-schema-validator/report.json
+          output_dir: .typespec-json-schema-validator/generated
+          max_probes: '96'
+      - name: Preserve parity receipt and generated comparison evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: typespec-json-schema-parity
+          path: .typespec-json-schema-validator/
+          if-no-files-found: warn
+          retention-days: 30

@@ -1,104 +1,319 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://ores-wasm-loaders.github.io/schemas/release-v2.json",
-  "title": "WASM application release",
-  "description": "The artifact an application publishes beside its build output and every host reads. v2 is a strict superset of v1: every v1 document validates, and the added fields describe what a host needs in order to prepare in the right order, budget the work, and know what activation means for this release.",
-  "type": "object",
-  "additionalProperties": false,
-  "required": ["schemaVersion", "appId", "release", "runtime", "entrypoint", "assets"],
-  "properties": {
-    "schemaVersion": { "enum": [1, 2] },
-    "appId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,63}$" },
-    "release": {
-      "description": "Immutable release identifier. Never reused: a host refuses a release id it has already seen describing different assets.",
+  "$id": "https://schemas.ores-wasm-loaders.dev/release-v2.json",
+  "title": "OWLS release manifest",
+  "description": "Independent JSON Schema authority for immutable OWLS release manifests. TypeSpec is a peer authority; generated output is comparison evidence only.",
+  "$ref": "#/$defs/Release",
+  "$defs": {
+    "SchemaVersion": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "SchemaVersion",
+      "type": "number",
+      "enum": [
+        1,
+        2
+      ]
+    },
+    "RuntimeKind": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "RuntimeKind",
+      "type": "string",
+      "enum": [
+        "raw-wasm",
+        "wasm-bindgen",
+        "flutter-web"
+      ]
+    },
+    "FrameworkKind": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "FrameworkKind",
+      "type": "string",
+      "enum": [
+        "leptos",
+        "dioxus",
+        "flutter",
+        "none"
+      ]
+    },
+    "AssetKind": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "AssetKind",
+      "type": "string",
+      "enum": [
+        "wasm",
+        "module",
+        "script",
+        "data",
+        "font"
+      ]
+    },
+    "AssetRole": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "AssetRole",
+      "type": "string",
+      "enum": [
+        "bootstrap",
+        "glue",
+        "module",
+        "fallback",
+        "chunk",
+        "asset"
+      ]
+    },
+    "AssetStage": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "AssetStage",
+      "type": "string",
+      "enum": [
+        "critical",
+        "optional",
+        "lazy"
+      ]
+    },
+    "PrepareStage": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "PrepareStage",
+      "type": "string",
+      "enum": [
+        "fetch",
+        "compile"
+      ]
+    },
+    "ActivationMode": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "ActivationMode",
+      "type": "string",
+      "enum": [
+        "attach-view",
+        "hydrate-islands",
+        "mount-route",
+        "run-app"
+      ]
+    },
+    "AssetId": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "AssetId",
       "type": "string",
       "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
     },
-    "runtime": {
-      "description": "How bytes become a running instance — the host execution contract.",
-      "enum": ["raw-wasm", "wasm-bindgen", "flutter-web"]
+    "HttpsAssetUrl": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "HttpsAssetUrl",
+      "type": "string",
+      "pattern": "^https://[^\\s]+$",
+      "maxLength": 4096
     },
-    "framework": {
-      "description": "Which activation shape this release expects, when the runtime alone does not say. Leptos and Dioxus are both wasm-bindgen runtimes that activate differently.",
-      "enum": ["leptos", "dioxus", "flutter", "none"]
+    "Sha256Hex": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "Sha256Hex",
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
     },
-    "toolchain": {
-      "description": "What produced the build, e.g. `wasm-bindgen 0.2.95 / leptos 0.7` or `flutter 3.35.1 (wasm)`.",
+    "ApplicationId": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "ApplicationId",
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+    },
+    "ReleaseId": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "ReleaseId",
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    },
+    "ToolchainId": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "ToolchainId",
       "type": "string",
       "minLength": 1,
       "maxLength": 128
     },
-    "entrypoint": { "type": "string", "minLength": 1, "maxLength": 128 },
-    "requiresCrossOriginIsolation": {
-      "description": "True only for Flutter's multi-threaded renderer. Not a property of WebAssembly in general, and never applied fleet-wide by reflex.",
-      "type": "boolean"
+    "HostSelector": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "HostSelector",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
     },
-    "assets": {
-      "type": "array",
-      "minItems": 1,
-      "maxItems": 512,
-      "items": { "$ref": "#/$defs/asset" }
+    "IslandName": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "IslandName",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
     },
-    "prepareBudget": {
-      "description": "What a page is allowed to spend preparing this release before the visitor asks for it.",
+    "RecordString": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "RecordString",
       "type": "object",
-      "additionalProperties": false,
-      "required": ["maxBytes", "maxConcurrency", "furthestStage"],
-      "properties": {
-        "maxBytes": { "type": "integer", "minimum": 0, "maximum": 268435456 },
-        "maxConcurrency": { "type": "integer", "minimum": 1, "maximum": 16 },
-        "furthestStage": {
-          "description": "How far preparation may go. `compile` is optional and only useful where the runtime's init can accept a compiled module.",
-          "enum": ["fetch", "compile"]
-        }
+      "additionalProperties": {
+        "type": "string"
       }
     },
-    "activation": {
-      "description": "What activation does once preparation is complete.",
+    "RecordUnknown": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "RecordUnknown",
       "type": "object",
-      "additionalProperties": false,
-      "required": ["mode"],
+      "additionalProperties": {}
+    },
+    "Asset": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "Asset",
+      "type": "object",
       "properties": {
-        "mode": { "enum": ["attach-view", "hydrate-islands", "mount-route", "run-app"] },
-        "hostSelector": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "id": {
+          "$ref": "#/$defs/AssetId"
+        },
+        "url": {
+          "$ref": "#/$defs/HttpsAssetUrl"
+        },
+        "kind": {
+          "$ref": "#/$defs/AssetKind"
+        },
+        "role": {
+          "$ref": "#/$defs/AssetRole"
+        },
+        "stage": {
+          "$ref": "#/$defs/AssetStage"
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 268435456
+        },
+        "sha256": {
+          "$ref": "#/$defs/Sha256Hex"
+        },
+        "prepare": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "url",
+        "kind",
+        "bytes",
+        "sha256",
+        "prepare"
+      ],
+      "unevaluatedProperties": false
+    },
+    "PrepareBudget": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "PrepareBudget",
+      "type": "object",
+      "properties": {
+        "maxBytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 268435456
+        },
+        "maxConcurrency": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16
+        },
+        "furthestStage": {
+          "$ref": "#/$defs/PrepareStage"
+        }
+      },
+      "required": [
+        "maxBytes",
+        "maxConcurrency",
+        "furthestStage"
+      ],
+      "unevaluatedProperties": false
+    },
+    "Activation": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "Activation",
+      "type": "object",
+      "properties": {
+        "mode": {
+          "$ref": "#/$defs/ActivationMode"
+        },
+        "hostSelector": {
+          "$ref": "#/$defs/HostSelector"
+        },
         "islands": {
-          "description": "Leptos: the island components this release hydrates.",
           "type": "array",
-          "items": { "type": "string", "minLength": 1, "maxLength": 128 },
+          "items": {
+            "$ref": "#/$defs/IslandName"
+          },
           "maxItems": 256
         },
         "routes": {
-          "description": "Dioxus: route path -> chunk asset id, as emitted by the framework's own splitter.",
-          "type": "object"
+          "$ref": "#/$defs/RecordString"
         }
-      }
+      },
+      "required": [
+        "mode"
+      ],
+      "unevaluatedProperties": false
     },
-    "extensions": { "type": "object" }
-  },
-  "$defs": {
-    "asset": {
+    "Release": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "Release",
       "type": "object",
-      "additionalProperties": false,
-      "required": ["id", "url", "kind", "bytes", "sha256", "prepare"],
       "properties": {
-        "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
-        "url": { "type": "string", "pattern": "^https://[^\\s]+$", "maxLength": 4096 },
-        "kind": { "enum": ["wasm", "module", "script", "data", "font"] },
-        "bytes": { "type": "integer", "minimum": 1, "maximum": 268435456 },
-        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
-        "prepare": {
-          "description": "Whether this asset may be fetched speculatively at all. The v1 authority on preparability, kept as-is.",
+        "schemaVersion": {
+          "$ref": "#/$defs/SchemaVersion"
+        },
+        "appId": {
+          "$ref": "#/$defs/ApplicationId"
+        },
+        "release": {
+          "$ref": "#/$defs/ReleaseId"
+        },
+        "runtime": {
+          "$ref": "#/$defs/RuntimeKind"
+        },
+        "framework": {
+          "$ref": "#/$defs/FrameworkKind"
+        },
+        "toolchain": {
+          "$ref": "#/$defs/ToolchainId"
+        },
+        "entrypoint": {
+          "$ref": "#/$defs/EntrypointId"
+        },
+        "requiresCrossOriginIsolation": {
           "type": "boolean"
         },
-        "role": {
-          "description": "The part this file plays in startup. Lets a host prepare the variant a runtime will actually use instead of every variant.",
-          "enum": ["bootstrap", "glue", "module", "fallback", "chunk", "asset"]
+        "assets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Asset"
+          },
+          "minItems": 1,
+          "maxItems": 512
         },
-        "stage": {
-          "description": "How eagerly a preparable asset may be taken. Absent means it is derived from `prepare`: true -> critical, false -> lazy.",
-          "enum": ["critical", "optional", "lazy"]
+        "prepareBudget": {
+          "$ref": "#/$defs/PrepareBudget"
+        },
+        "activation": {
+          "$ref": "#/$defs/Activation"
+        },
+        "extensions": {
+          "$ref": "#/$defs/RecordUnknown"
         }
-      }
+      },
+      "required": [
+        "schemaVersion",
+        "appId",
+        "release",
+        "runtime",
+        "entrypoint",
+        "assets"
+      ],
+      "unevaluatedProperties": false
+    },
+    "EntrypointId": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "EntrypointId",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
     }
   }
 }
