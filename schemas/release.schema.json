@@ -161,7 +161,7 @@
     "Asset": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "$id": "Asset",
-       "type": "object",
+      "type": "object",
       "properties": {
         "id": {
           "$ref": "AssetId"
