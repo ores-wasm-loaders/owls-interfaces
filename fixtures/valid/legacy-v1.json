@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "appId": "legacy-v1-app",
+  "release": "2026.08.01-v1",
+  "runtime": "raw-wasm",
+  "entrypoint": "main-wasm",
+  "assets": [
+    {
+      "id": "main-wasm",
+      "url": "https://assets.ores-wasm-loaders.test/releases/legacy-v1-app/2026.08.01-v1/main.wasm",
+      "kind": "wasm",
+      "bytes": 4096,
+      "sha256": "0d6e4079e36703ebd37c00722f5891d28b0e2811dc114b129215123adcce3605",
+      "prepare": true
+    },
+    {
+      "id": "data-json",
+      "url": "https://assets.ores-wasm-loaders.test/releases/legacy-v1-app/2026.08.01-v1/data.json",
+      "kind": "data",
+      "bytes": 128,
+      "sha256": "3a6eb0790f39ac87c94f3856b2dd2c5d110e6811602261a9a923d3bb23adc8b7",
+      "prepare": false
+    }
+  ]
+}

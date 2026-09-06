@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 2,
+  "appId": "owl-fixture-dioxus",
+  "release": "2026.09.05-4c5d6e7",
+  "runtime": "wasm-bindgen",
+  "framework": "dioxus",
+  "toolchain": "wasm-bindgen 0.2.95 / dioxus 0.6 (route chunks)",
+  "entrypoint": "app.js",
+  "requiresCrossOriginIsolation": false,
+  "assets": [
+    {
+      "id": "app.js",
+      "url": "https://assets.ores-wasm-loaders.test/releases/owl-fixture-dioxus/2026.09.05-4c5d6e7/app.js",
+      "kind": "module",
+      "bytes": 52000,
+      "sha256": "152e7b00b7b3004d52f68e6102c4a1a19d39b7aa6c971ed3169acad0ece22812",
+      "prepare": true,
+      "role": "glue",
+      "stage": "critical"
+    },
+    {
+      "id": "app_bg.wasm",
+      "url": "https://assets.ores-wasm-loaders.test/releases/owl-fixture-dioxus/2026.09.05-4c5d6e7/app_bg.wasm",
+      "kind": "wasm",
+      "bytes": 640000,
+      "sha256": "277a67092024c744ffa18ec65c45385f4a86061992361c5afbaac607810f5a09",
+      "prepare": true,
+      "role": "module",
+      "stage": "critical"
+    },
+    {
+      "id": "chunks-app.wasm",
+      "url": "https://assets.ores-wasm-loaders.test/releases/owl-fixture-dioxus/2026.09.05-4c5d6e7/chunks/app.wasm",
+      "kind": "wasm",
+      "bytes": 210000,
+      "sha256": "d2cc0c6a9342884fc9434431ac7a587b4123383f752f6485d5f26a2892adcc22",
+      "prepare": true,
+      "role": "chunk",
+      "stage": "critical"
+    },
+    {
+      "id": "chunks-reports.wasm",
+      "url": "https://assets.ores-wasm-loaders.test/releases/owl-fixture-dioxus/2026.09.05-4c5d6e7/chunks/reports.wasm",
+      "kind": "wasm",
+      "bytes": 380000,
+      "sha256": "3473754009502da1e12796783943cd3a7ff6fb2379f41ede76b4b830c2cc9036",
+      "prepare": true,
+      "role": "chunk",
+      "stage": "critical"
+    },
+    {
+      "id": "app.css",
+      "url": "https://assets.ores-wasm-loaders.test/releases/owl-fixture-dioxus/2026.09.05-4c5d6e7/app.css",
+      "kind": "data",
+      "bytes": 22000,
+      "sha256": "4ad45d8e783a2354a7b75805feb929fad539d7d55e0bb4ec2d9f4e61d3c0b5e9",
+      "prepare": true,
+      "role": "asset",
+      "stage": "critical"
+    }
+  ],
+  "prepareBudget": {
+    "maxBytes": 1304000,
+    "maxConcurrency": 3,
+    "furthestStage": "compile"
+  },
+  "activation": {
+    "mode": "mount-route",
+    "hostSelector": "#dioxus-root",
+    "routes": {
+      "/app": "chunks-app.wasm",
+      "/app/reports": "chunks-reports.wasm"
+    }
+  }
+}
