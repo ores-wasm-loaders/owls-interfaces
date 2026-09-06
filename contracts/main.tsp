@@ -1,49 +1,91 @@
-// TypeSpec peer of schemas/release.schema.json. Neither is generated from the other; a test
-// checks that they describe the same release, so a change to one that is not mirrored in the
-// other fails the build instead of drifting.
+import "@typespec/json-schema";
+
+using TypeSpec.JsonSchema;
+
+@jsonSchema
 namespace Ores.WasmLoaders;
 
 model Asset {
+  @minLength(1)
+  @maxLength(96)
+  @pattern("^[A-Za-z0-9._-]+$")
   id: string;
+
   url: url;
+
   kind: "wasm" | "module" | "script" | "data" | "font";
-  bytes: int64;
+
+  @minValue(1)
+  @maxValue(268435456)
+  bytes: int32;
+
+  @pattern("^[0-9a-f]{64}$")
   sha256: string;
-  /** v1 authority on whether an asset may be fetched speculatively at all. */
+
   prepare: boolean;
-  /** The part this file plays in startup, so a host can prepare only the variant it will use. */
+
   role?: "bootstrap" | "glue" | "module" | "fallback" | "chunk" | "asset";
-  /** How eagerly. Absent means derived from `prepare`: true -> critical, false -> lazy. */
+
   stage?: "critical" | "optional" | "lazy";
 }
 
 model PrepareBudget {
-  maxBytes: int64;
+  @minValue(1)
+  @maxValue(268435456)
+  maxBytes: int32;
+
+  @minValue(1)
+  @maxValue(8)
   maxConcurrency: int32;
-  /** `compile` is optional and only useful where a runtime's init can accept a module. */
+
   furthestStage: "fetch" | "compile";
 }
 
 model Activation {
   mode: "attach-view" | "hydrate-islands" | "mount-route" | "run-app";
+
+  @minLength(1)
+  @maxLength(512)
   hostSelector?: string;
+
+  @maxItems(256)
   islands?: string[];
+
   routes?: Record<string>;
 }
 
 model Release {
-  schemaVersion: 2;
+  schemaVersion: 1 | 2;
+
+  @minLength(2)
+  @maxLength(63)
+  @pattern("^[a-z][a-z0-9-]*$")
   appId: string;
+
+  @minLength(1)
+  @maxLength(128)
+  @pattern("^[A-Za-z0-9._+-]+$")
   release: string;
-  /** How bytes become an instance — the host execution contract. */
+
   runtime: "raw-wasm" | "wasm-bindgen" | "flutter-web";
-  /** Which activation shape, when the runtime alone does not say (Leptos vs Dioxus). */
+
   framework?: "leptos" | "dioxus" | "flutter" | "none";
+
+  @minLength(1)
+  @maxLength(128)
   toolchain?: string;
+
+  @minLength(1)
+  @maxLength(96)
+  @pattern("^[A-Za-z0-9._-]+$")
   entrypoint: string;
-  /** True only for Flutter's threaded renderer, never for WebAssembly in general. */
+
   requiresCrossOriginIsolation?: boolean;
+
+  @minItems(1)
+  @maxItems(512)
   assets: Asset[];
+
   prepareBudget?: PrepareBudget;
   activation?: Activation;
   extensions?: Record<unknown>;

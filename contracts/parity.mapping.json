@@ -1,0 +1,30 @@
+{
+  "schema": "ores.typespec-json-schema-validator.mapping/v1",
+  "declarations": [
+    {
+      "typespec": "Ores.WasmLoaders.Asset",
+      "generated": "Asset",
+      "authored": "Asset"
+    },
+    {
+      "typespec": "Ores.WasmLoaders.PrepareBudget",
+      "generated": "PrepareBudget",
+      "authored": "PrepareBudget"
+    },
+    {
+      "typespec": "Ores.WasmLoaders.Activation",
+      "generated": "Activation",
+      "authored": "Activation"
+    },
+    {
+      "typespec": "Ores.WasmLoaders.Release",
+      "generated": "Release",
+      "authored": "Release"
+    }
+  ],
+  "ignore": {
+    "typespec": [],
+    "generated": ["RecordString", "RecordUnknown"],
+    "authored": ["RecordString", "RecordUnknown"]
+  }
+}

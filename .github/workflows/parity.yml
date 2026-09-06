@@ -1,0 +1,40 @@
+name: typespec-json-schema parity
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  parity:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check out the pinned parity validator
+        uses: actions/checkout@v4
+        with:
+          repository: ORESoftware/typespec-json-schema-validator
+          ref: 3822508a667d36f9e094f84aa57b1b2944230852
+          path: .tools/typespec-json-schema-validator
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+        working-directory: .tools/typespec-json-schema-validator
+      - name: Generate Schema B and compare it with independently authored Schema A
+        run: |
+          node .tools/typespec-json-schema-validator/bin/typespec-json-schema-validator.mjs check \
+            --typespec=contracts/main.tsp \
+            --schema=schemas/release.schema.json \
+            --mapping=contracts/parity.mapping.json \
+            --report=artifacts/typespec-json-schema-parity.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: typespec-json-schema-parity
+          path: artifacts/typespec-json-schema-parity.json
+          if-no-files-found: error
