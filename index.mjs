@@ -1,8 +1,8 @@
 // owls-interfaces — versioned WASM release contracts for browser, Flutter and Rust hosts.
 //
-// The JSON Schema in `schemas/` is the wire authority; `contracts/main.tsp` is its
-// independent TypeSpec peer. Hosts validate untrusted JSON with `parseRelease` before use.
-import { readFileSync } from 'node:fs';
+// The JSON Schema in `schemas/` is one independent wire authority; `contracts/main.tsp` is its
+// independently authored TypeSpec peer. Hosts validate untrusted JSON with `parseRelease`
+// before use. The schema is loaded from the authoritative file in both Node and browsers.
 
 export {
   LoaderError,
@@ -19,8 +19,34 @@ export {
 } from './release.mjs';
 export { validateAgainst } from './validate.mjs';
 
-/** The release schema, for hosts that read it from this package rather than the CDN. */
-export const releaseSchema = JSON.parse(readFileSync(new URL('./schemas/release.schema.json', import.meta.url), 'utf8'));
+async function loadReleaseSchema() {
+  const url = new URL('./schemas/release.schema.json', import.meta.url);
+  if (globalThis.process?.versions?.node) {
+    const { readFileSync } = await import('node:fs');
+    return JSON.parse(readFileSync(url, 'utf8'));
+  }
+
+  const response = await fetch(url, {
+    credentials: 'omit',
+    redirect: 'error',
+    referrerPolicy: 'no-referrer',
+  });
+  if (!response.ok) {
+    throw new Error(`Unable to load the OWLS release schema: HTTP ${response.status}`);
+  }
+  return response.json();
+}
+
+function freezeDeep(value) {
+  if (value && typeof value === 'object' && !Object.isFrozen(value)) {
+    for (const child of Object.values(value)) freezeDeep(child);
+    Object.freeze(value);
+  }
+  return value;
+}
+
+/** The immutable, independently authored release schema used by all JavaScript hosts. */
+export const releaseSchema = freezeDeep(await loadReleaseSchema());
 
 export const RUNTIMES = Object.freeze(['raw-wasm', 'wasm-bindgen', 'flutter-web']);
 export const ACTIVATION_MODES = Object.freeze(['attach-view', 'hydrate-islands', 'mount-route', 'run-app']);
