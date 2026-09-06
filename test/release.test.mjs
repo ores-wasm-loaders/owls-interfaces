@@ -111,6 +111,17 @@ test('identity keys are stable and content-addressed', () => {
   assert.equal(assetKey(r.assets[0]), `${r.assets[0].url}#${r.assets[0].sha256}`);
 });
 
+test('the dependency-free validator enforces sealed models and typed record values', () => {
+  const base = load('dioxus.json');
+  const extra = structuredClone(base);
+  extra.notInTheContract = true;
+  assert.ok(validateAgainst(extra, releaseSchema).some((error) => error.includes('unexpected property')));
+
+  const badRoute = structuredClone(base);
+  badRoute.activation.routes['/app'] = 42;
+  assert.ok(validateAgainst(badRoute, releaseSchema).some((error) => error.includes('expected string')));
+});
+
 test('the validator refuses a schema keyword it does not implement', () => {
   const errors = validateAgainst({ a: 'x' }, { type: 'object', properties: { a: { type: 'string', format: 'email' } } });
   assert.ok(errors.some((e) => e.includes('unsupported keyword `format`')));
@@ -140,10 +151,10 @@ function schemaFields(node) {
 test('the TypeSpec peer and the JSON Schema describe the same release', () => {
   const tsp = tspFields(readFileSync(join(here, '..', 'contracts/main.tsp'), 'utf8'));
   const pairs = [
-    ['Release', releaseSchema],
-    ['Asset', releaseSchema.$defs.asset],
-    ['PrepareBudget', releaseSchema.properties.prepareBudget],
-    ['Activation', releaseSchema.properties.activation],
+    ['Release', releaseSchema.$defs.Release],
+    ['Asset', releaseSchema.$defs.Asset],
+    ['PrepareBudget', releaseSchema.$defs.PrepareBudget],
+    ['Activation', releaseSchema.$defs.Activation],
   ];
   for (const [model, node] of pairs) {
     const a = tsp.get(model);
