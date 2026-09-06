@@ -15,13 +15,33 @@ const typeOf = (v) =>
   v === null ? 'null' : Array.isArray(v) ? 'array' : Number.isInteger(v) ? 'integer' : typeof v;
 
 function resolve(ref, root) {
-  if (!ref.startsWith('#/')) throw new Error(`unsupported $ref \`${ref}\``);
-  let node = root;
-  for (const part of ref.slice(2).split('/')) {
-    node = node?.[part.replace(/~1/g, '/').replace(/~0/g, '~')];
-    if (node === undefined) throw new Error(`unresolvable $ref \`${ref}\``);
+  if (ref.startsWith('#/')) {
+    let node = root;
+    for (const part of ref.slice(2).split('/')) {
+      node = node?.[part.replace(/~1/g, '/').replace(/~0/g, '~')];
+      if (node === undefined) throw new Error(`unresolvable $ref \`${ref}\``);
+    }
+    return node;
   }
-  return node;
+
+  // Named declarations carry their own relative `$id`, exactly as the official TypeSpec
+  // emitter does. Resolve those resources from the root collection without becoming a general
+  // network-capable JSON Schema resolver.
+  const definitions = root?.$defs ?? root?.definitions;
+  if (definitions && typeof definitions === 'object') {
+    if (definitions[ref] !== undefined) return definitions[ref];
+    let target;
+    try { target = new URL(ref, root.$id ?? 'https://owls.invalid/').href; } catch { target = null; }
+    for (const [name, candidate] of Object.entries(definitions)) {
+      if (name === ref || candidate?.$id === ref) return candidate;
+      if (target && typeof candidate?.$id === 'string') {
+        try {
+          if (new URL(candidate.$id, root.$id ?? 'https://owls.invalid/').href === target) return candidate;
+        } catch { /* invalid declaration ids are rejected by contract CI */ }
+      }
+    }
+  }
+  throw new Error(`unsupported or unresolvable $ref \`${ref}\``);
 }
 
 function accepts(value, schema, root) {

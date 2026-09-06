@@ -162,19 +162,19 @@
       "type": "object",
       "properties": {
         "id": {
-          "$ref": "#/$defs/AssetId"
+          "$ref": "AssetId"
         },
         "url": {
-          "$ref": "#/$defs/HttpsAssetUrl"
+          "$ref": "HttpsAssetUrl"
         },
         "kind": {
-          "$ref": "#/$defs/AssetKind"
+          "$ref": "AssetKind"
         },
         "role": {
-          "$ref": "#/$defs/AssetRole"
+          "$ref": "AssetRole"
         },
         "stage": {
-          "$ref": "#/$defs/AssetStage"
+          "$ref": "AssetStage"
         },
         "bytes": {
           "type": "integer",
@@ -182,7 +182,7 @@
           "maximum": 268435456
         },
         "sha256": {
-          "$ref": "#/$defs/Sha256Hex"
+          "$ref": "Sha256Hex"
         },
         "prepare": {
           "type": "boolean"
@@ -214,7 +214,7 @@
           "maximum": 16
         },
         "furthestStage": {
-          "$ref": "#/$defs/PrepareStage"
+          "$ref": "PrepareStage"
         }
       },
       "required": [
@@ -230,20 +230,20 @@
       "type": "object",
       "properties": {
         "mode": {
-          "$ref": "#/$defs/ActivationMode"
+          "$ref": "ActivationMode"
         },
         "hostSelector": {
-          "$ref": "#/$defs/HostSelector"
+          "$ref": "HostSelector"
         },
         "islands": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/IslandName"
+            "$ref": "IslandName"
           },
           "maxItems": 256
         },
         "routes": {
-          "$ref": "#/$defs/RecordString"
+          "$ref": "RecordString"
         }
       },
       "required": [
@@ -257,25 +257,25 @@
       "type": "object",
       "properties": {
         "schemaVersion": {
-          "$ref": "#/$defs/SchemaVersion"
+          "$ref": "SchemaVersion"
         },
         "appId": {
-          "$ref": "#/$defs/ApplicationId"
+          "$ref": "ApplicationId"
         },
         "release": {
-          "$ref": "#/$defs/ReleaseId"
+          "$ref": "ReleaseId"
         },
         "runtime": {
-          "$ref": "#/$defs/RuntimeKind"
+          "$ref": "RuntimeKind"
         },
         "framework": {
-          "$ref": "#/$defs/FrameworkKind"
+          "$ref": "FrameworkKind"
         },
         "toolchain": {
-          "$ref": "#/$defs/ToolchainId"
+          "$ref": "ToolchainId"
         },
         "entrypoint": {
-          "$ref": "#/$defs/EntrypointId"
+          "$ref": "EntrypointId"
         },
         "requiresCrossOriginIsolation": {
           "type": "boolean"
@@ -283,19 +283,19 @@
         "assets": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/Asset"
+            "$ref": "Asset"
           },
           "minItems": 1,
           "maxItems": 512
         },
         "prepareBudget": {
-          "$ref": "#/$defs/PrepareBudget"
+          "$ref": "PrepareBudget"
         },
         "activation": {
-          "$ref": "#/$defs/Activation"
+          "$ref": "Activation"
         },
         "extensions": {
-          "$ref": "#/$defs/RecordUnknown"
+          "$ref": "RecordUnknown"
         }
       },
       "required": [

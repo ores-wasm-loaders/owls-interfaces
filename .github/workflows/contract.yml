@@ -40,3 +40,4 @@ jobs:
           path: .typespec-json-schema-validator/
           if-no-files-found: warn
           retention-days: 30
+          include-hidden-files: true
