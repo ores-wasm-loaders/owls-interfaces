@@ -5,8 +5,22 @@
   "types": "./typescript/index.d.ts",
   "exports": {
     ".": {
-      "types": "./typescript/index.d.ts"
+      "types": "./typescript/index.d.ts",
+      "default": "./index.mjs"
     }
   },
+  "files": [
+    "index.mjs",
+    "release.mjs",
+    "validate.mjs",
+    "schemas/**",
+    "contracts/**",
+    "typescript/**",
+    "rust/src/**",
+    "rust/Cargo.toml",
+    "dart/lib/**",
+    "dart/pubspec.yaml",
+    ".zpkg.toml"
+  ],
   "license": "MIT"
 }
