@@ -15,21 +15,21 @@ fn every_shared_fixture_round_trips_without_losing_v2_fields() {
     let mut names = fs::read_dir(fixture_dir())
         .expect("fixture directory")
         .map(|entry| entry.expect("fixture entry").path())
-        .filter(|path| {
-            path.extension().and_then(|extension| extension.to_str()) == Some("json")
-        })
+        .filter(|path| path.extension().and_then(|extension| extension.to_str()) == Some("json"))
         .collect::<Vec<_>>();
     names.sort();
-    assert!(names.len() >= 4, "expected the shared release fixture corpus");
+    assert!(
+        names.len() >= 4,
+        "expected the shared release fixture corpus"
+    );
 
     let mut saw_v1 = false;
     let mut saw_v2 = false;
     for path in names {
         let source = fs::read_to_string(&path).expect("fixture source");
         let expected: Value = serde_json::from_str(&source).expect("fixture JSON");
-        let release: Release = serde_json::from_value(expected.clone()).unwrap_or_else(|error| {
-            panic!("{} did not deserialize: {error}", path.display())
-        });
+        let release: Release = serde_json::from_value(expected.clone())
+            .unwrap_or_else(|error| panic!("{} did not deserialize: {error}", path.display()));
         saw_v1 |= release.schema_version == SchemaVersion::V1;
         saw_v2 |= release.schema_version == SchemaVersion::V2;
         assert_eq!(
@@ -39,7 +39,10 @@ fn every_shared_fixture_round_trips_without_losing_v2_fields() {
             path.display()
         );
     }
-    assert!(saw_v1 && saw_v2, "both schema generations must remain consumable");
+    assert!(
+        saw_v1 && saw_v2,
+        "both schema generations must remain consumable"
+    );
 }
 
 #[test]
