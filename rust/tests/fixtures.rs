@@ -77,7 +77,7 @@ fn enum_wire_values_match_the_contract() {
         ("run-app", json!(ActivationMode::RunApp)),
     ];
     for (wire, value) in cases {
-        assert_eq!(value, json!(wire));
+        assert_eq!(value, &json!(wire));
     }
 }
 
