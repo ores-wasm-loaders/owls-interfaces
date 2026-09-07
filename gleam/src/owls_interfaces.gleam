@@ -77,37 +77,48 @@ pub type ActivationMode {
 }
 
 // @contract-ir AssetId scalar-like
-pub type AssetId = String
+pub type AssetId =
+  String
 
 // @contract-ir HttpsAssetUrl scalar-like
-pub type HttpsAssetUrl = String
+pub type HttpsAssetUrl =
+  String
 
 // @contract-ir Sha256Hex scalar-like
-pub type Sha256Hex = String
+pub type Sha256Hex =
+  String
 
 // @contract-ir ApplicationId scalar-like
-pub type ApplicationId = String
+pub type ApplicationId =
+  String
 
 // @contract-ir ReleaseId scalar-like
-pub type ReleaseId = String
+pub type ReleaseId =
+  String
 
 // @contract-ir ToolchainId scalar-like
-pub type ToolchainId = String
+pub type ToolchainId =
+  String
 
 // @contract-ir EntrypointId scalar-like
-pub type EntrypointId = String
+pub type EntrypointId =
+  String
 
 // @contract-ir HostSelector scalar-like
-pub type HostSelector = String
+pub type HostSelector =
+  String
 
 // @contract-ir IslandName scalar-like
-pub type IslandName = String
+pub type IslandName =
+  String
 
 // @contract-ir RecordString model
-pub type RecordString = List(#(String, String))
+pub type RecordString =
+  List(#(String, String))
 
 // @contract-ir RecordUnknown model
-pub type RecordUnknown = List(#(String, JsonValue))
+pub type RecordUnknown =
+  List(#(String, JsonValue))
 
 // @contract-ir Asset model bytes|id|kind|prepare|role|sha256|stage|url
 pub type Asset {
