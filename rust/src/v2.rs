@@ -1,4 +1,4 @@
-use serde::{de::Error as _, Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Deserializer, Serialize, Serializer, de::Error as _};
 use std::collections::BTreeMap;
 
 // These are downstream wire projections. TypeSpec and authored JSON Schema remain peers.
@@ -30,7 +30,9 @@ impl<'de> Deserialize<'de> for SchemaVersion {
         match u8::deserialize(deserializer)? {
             1 => Ok(Self::V1),
             2 => Ok(Self::V2),
-            value => Err(D::Error::custom(format!("unsupported schemaVersion {value}"))),
+            value => Err(D::Error::custom(format!(
+                "unsupported schemaVersion {value}"
+            ))),
         }
     }
 }
