@@ -179,7 +179,8 @@ void _expectKeys(
   final unknown = json.keys.where((key) => !allowed.contains(key)).toList()
     ..sort();
   if (unknown.isNotEmpty) {
-    throw FormatException('$name contains unknown fields: ${unknown.join(', ')}');
+    throw FormatException(
+        '$name contains unknown fields: ${unknown.join(', ')}');
   }
 }
 
@@ -213,7 +214,16 @@ class WasmAsset {
   factory WasmAsset.fromJson(Map<String, dynamic> json) {
     _expectKeys(
       json,
-      const {'id', 'url', 'kind', 'role', 'stage', 'bytes', 'sha256', 'prepare'},
+      const {
+        'id',
+        'url',
+        'kind',
+        'role',
+        'stage',
+        'bytes',
+        'sha256',
+        'prepare'
+      },
       'Asset',
     );
     final kind = _requiredString(json, 'kind');
@@ -312,9 +322,8 @@ class WasmActivation {
     return WasmActivation(
       mode: _requiredString(json, 'mode'),
       hostSelector: json['hostSelector'] as String?,
-      islands: islands == null
-          ? null
-          : List<String>.from(islands as List<dynamic>),
+      islands:
+          islands == null ? null : List<String>.from(islands as List<dynamic>),
       routes: routes == null
           ? null
           : Map<String, String>.from(
