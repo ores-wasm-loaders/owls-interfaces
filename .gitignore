@@ -6,6 +6,7 @@ node_modules/
 target/
 .dart_tool/
 build/
+.typespec-json-schema-validator/
 .env
 .env.*
 .DS_Store

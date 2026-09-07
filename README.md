@@ -1,52 +1,69 @@
 # owls-interfaces
 
-Versioned WASM release contracts for browser, Flutter and Rust hosts.
+Versioned WASM release contracts and language projections for browser, Flutter, Rust, Go, and
+Gleam hosts.
 
-A release describes itself: what it is made of, what may be prepared before a visitor asks
-for it, and what activation means. Hosts validate untrusted JSON with `parseRelease` before
-using any of it.
+A release describes what it contains, what may be prepared before a visitor explicitly starts an
+application, and how the selected framework activates. Hosts validate untrusted JSON against the
+authored schema and host invariants before using it.
 
 ## release-v2
 
-v2 is a strict superset of v1 — every v1 document still validates and still means exactly
-what it meant. It adds what a host needs in order to prepare *well* rather than merely
-prepare:
+v2 is a strict superset of v1: every v1 document remains consumable. It adds the information a
+shared loader needs to prepare only the selected runtime path and preserve framework ownership.
 
-| Added | Why |
+| Added | Purpose |
 | --- | --- |
-| `assets[].role` | `bootstrap` / `glue` / `module` / `fallback` / `chunk` / `asset`. Lets a host prepare the startup variant the runtime will actually use instead of every variant — a Flutter page no longer pulls both the WasmGC module and the full JS fallback. |
-| `assets[].stage` | `critical` / `optional` / `lazy`, refining v1's boolean `prepare`, which remains the authority on whether an asset may be fetched speculatively at all. Absent means derived: `prepare:true` → critical, `false` → lazy. |
-| `prepareBudget` | The publisher's ceiling on speculative work: bytes, concurrency, and how far preparation may go (`fetch`, or `compile` where a runtime's init can accept a module). |
-| `activation` | `attach-view` / `hydrate-islands` / `mount-route` / `run-app`, plus the islands or route→chunk map the build actually emitted. |
-| `framework` | Which activation shape, where the runtime alone does not say: Leptos and Dioxus are both wasm-bindgen runtimes that activate differently. |
-| `requiresCrossOriginIsolation` | True only for Flutter's threaded renderer — not a property of WebAssembly, and not something to apply fleet-wide by reflex. |
-| `toolchain` | What produced the build. |
+| `assets[].role` | Distinguishes bootstrap, generated glue, module, fallback, chunk, and ordinary assets. |
+| `assets[].stage` | Grades critical, optional, and lazy assets while retaining `prepare` as the speculative-fetch authority. |
+| `prepareBudget` | Sets publisher byte, concurrency, and preparation-stage ceilings. |
+| `activation` | Declares attach-view, island hydration, route mounting, or ordinary application startup. |
+| `framework` | Distinguishes Leptos, Dioxus, Flutter, or no browser framework where the runtime alone is insufficient. |
+| `requiresCrossOriginIsolation` | Records the release-specific isolation requirement rather than applying it to all Wasm. |
+| `toolchain` | Identifies the build toolchain that produced the release. |
 
-## The invariants a schema cannot state
+`releaseProblems()` enforces invariants that JSON Schema alone cannot express: matching
+entrypoints, unique identities, canonical HTTPS origins, wasm-bindgen module pairing, coherent
+preparation budgets, supported activation modes, named islands, and declared route chunks.
 
-`releaseProblems()` checks them, and `parseRelease` refuses a release that fails any:
+## Independent authorities and Contract IR
 
-- the entrypoint exists and its kind matches the runtime;
-- asset ids and URLs are unique;
-- every asset URL is canonical HTTPS on an allowed origin (no credentials, query or fragment);
-- a wasm-bindgen release has a wasm module beside its glue;
-- `prepareBudget.maxBytes` covers the release's own critical bytes — a budget that guarantees
-  truncation is a bug that looks like a mysterious slow start;
-- a flutter-web release does not claim the `compile` stage: its generated bootstrap owns
-  compilation, so a separately compiled module has nowhere to go;
-- the activation mode is one the runtime can perform, island hydration names its islands, and
-  every declared route maps to a declared asset.
+`contracts/main.tsp` and `schemas/release.schema.json` are independently authored peer authorities.
+Neither is generated from or ranked above the other. CI emits a temporary JSON Schema B from
+TypeSpec, performs declaration and semantic comparison, runs differential probes, and stops on any
+unexplained difference.
 
-## Authorities
+A passing run emits deterministic Contract IR and immediately verifies it against the exact receipt
+and input digests. Contract IR and Schema B are downstream evidence only; they are never committed
+over either authored source.
 
-`schemas/release.schema.json` is the wire authority. `contracts/main.tsp` is its independent
-TypeSpec peer — neither is generated from the other, and a test asserts they describe the same
-release, so a change to one that is not mirrored in the other fails the build rather than
-drifting. TypeScript, Dart and Rust projections live beside them.
+## Five language projections
 
-Validation is dependency-free: no build step and no registry, because this package is
-consumed by the first script a page runs.
+The admitted declaration set is projected into:
+
+| Language | Location | Compatibility |
+| --- | --- | --- |
+| TypeScript | `typescript/index.ts` and `index.d.ts` | v1 and v2 structural types; both files must be byte-identical. |
+| Rust | `rust/src/v2.rs` | Complete v2 module; legacy root v1 structs remain intact for current native hosts. |
+| Dart | `dart/lib/owls_interfaces.dart` | Immutable v1/v2 JSON models and closed wire enums. |
+| Go | `go/contract.go` | Strict decoding, closed wire enums, and v1/v2 fixture round trips. |
+| Gleam | `gleam/src/owls_interfaces.gleam` | Dependency-free custom types and explicit wire conversions. |
+
+Each projection carries machine-readable `@contract-ir` markers. After Contract IR admission,
+`scripts/check-language-projections.mjs` requires every language to contain the exact declaration
+set, model-property sets, and enum domains. It writes a deterministic projection receipt containing
+the Contract IR ID, parity receipt run ID, every assertion digest, and each projection source hash.
+The marker and receipt layer detects projection drift; it does not replace schema or host validation.
+
+CI compiles and tests every language with exact toolchain versions. Rust, Dart, and Go round-trip the
+shared v1/v2 fixture corpus; the Node suite checks package contents and projection policy.
 
 ```sh
 node --test test/*.test.mjs
+npm ci --ignore-scripts
+npm run typecheck
+(cd rust && cargo test --locked)
+(cd go && go test ./...)
+(cd dart && dart pub get --enforce-lockfile && dart run bin/fixture_check.dart)
+(cd gleam && gleam check)
 ```

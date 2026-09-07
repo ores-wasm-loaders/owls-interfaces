@@ -1,14 +1,31 @@
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
+pub mod v2;
+
 pub const RELEASE_SCHEMA: &str = include_str!("../../schemas/release.schema.json");
 
+/// Legacy v1-compatible projection retained for existing native hosts.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub enum Runtime { RawWasm, WasmBindgen, FlutterWeb }
+pub enum Runtime {
+    RawWasm,
+    WasmBindgen,
+    FlutterWeb,
+}
+
+/// Legacy v1-compatible projection retained for existing native hosts.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
-pub enum AssetKind { Wasm, Module, Script, Data, Font }
+pub enum AssetKind {
+    Wasm,
+    Module,
+    Script,
+    Data,
+    Font,
+}
+
+/// Legacy v1-compatible projection retained for existing native hosts.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Asset {
@@ -19,6 +36,8 @@ pub struct Asset {
     pub sha256: String,
     pub prepare: bool,
 }
+
+/// Legacy v1-compatible projection retained for existing native hosts.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Release {
@@ -31,4 +50,3 @@ pub struct Release {
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub extensions: BTreeMap<String, serde_json::Value>,
 }
-

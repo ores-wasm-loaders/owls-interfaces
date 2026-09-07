@@ -11,12 +11,25 @@ test('JavaScript package-name import resolves the real runtime contract', async 
   assert.equal(typeof contract.releaseSchema, 'object');
   assert.ok(Object.isFrozen(contract.releaseSchema));
 });
-test('published archive includes schema and runtime, not dev caches or corpus', () => {
+test('published archive includes every language projection, not dev caches or corpus', () => {
   const cwd = fileURLToPath(new URL('../', import.meta.url));
   const [pack] = JSON.parse(execFileSync('npm', ['pack', '--dry-run', '--ignore-scripts', '--json'], {cwd, encoding:'utf8'}));
   const names = pack.files.map(file => file.path);
-  for (const expected of ['index.mjs', 'release.mjs', 'validate.mjs', 'schemas/release.schema.json', 'contracts/main.tsp', 'typescript/index.d.ts']) assert.ok(names.includes(expected), expected);
-  assert.ok(!names.some(path => /(^|\/)(node_modules|target|\.git|test|env)(\/|$)/.test(path)));
+  for (const expected of [
+    'index.mjs',
+    'release.mjs',
+    'validate.mjs',
+    'schemas/release.schema.json',
+    'contracts/main.tsp',
+    'typescript/index.d.ts',
+    'typescript/index.ts',
+    'rust/src/lib.rs',
+    'rust/src/v2.rs',
+    'dart/lib/owls_interfaces.dart',
+    'go/contract.go',
+    'gleam/src/owls_interfaces.gleam',
+  ]) assert.ok(names.includes(expected), expected);
+  assert.ok(!names.some(path => /(^|\/)(node_modules|target|\.git|test|env|\.typespec-json-schema-validator)(\/|$)/.test(path)));
   assert.ok(pack.size < 2 * 1024 * 1024);
 });
 test('runtime export does not replace the TypeScript declaration entrypoint', async () => {

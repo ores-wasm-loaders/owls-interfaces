@@ -2,6 +2,7 @@
   "name": "@ores-wasm-loaders/owls-interfaces",
   "version": "0.1.1",
   "type": "module",
+  "description": "Peer-authored TypeSpec and JSON Schema WASM release contracts with Contract-IR-gated TypeScript, Rust, Dart, Go, and Gleam projections.",
   "types": "./typescript/index.d.ts",
   "exports": {
     ".": {
@@ -20,7 +21,16 @@
     "rust/Cargo.toml",
     "dart/lib/**",
     "dart/pubspec.yaml",
+    "go/**",
+    "gleam/**",
     ".zpkg.toml"
   ],
+  "scripts": {
+    "typecheck": "tsc --project typescript/tsconfig.json",
+    "test": "node --test test/*.test.mjs"
+  },
+  "devDependencies": {
+    "typescript": "5.8.3"
+  },
   "license": "MIT"
 }
