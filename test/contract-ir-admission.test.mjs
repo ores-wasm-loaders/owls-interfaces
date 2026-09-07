@@ -10,7 +10,7 @@ test('CI emits and independently re-verifies a digest-bound Contract IR', async 
   assert.match(workflow, new RegExp(`ORESoftware/typespec-json-schema-validator@${validatorRef}`));
   assert.match(workflow, /contract_ir:\s*\.typespec-json-schema-validator\/contract-ir\.json/);
   assert.match(workflow, /repository:\s*ORESoftware\/typespec-json-schema-validator/);
-  assert.match(workflow, new RegExp(`ref:\s*${validatorRef}`));
+  assert.ok(workflow.includes(`ref: ${validatorRef}`), 'validator verification checkout must use the exact immutable ref');
   assert.match(workflow, /node scripts\/verify-contract-ir\.mjs/);
   assert.match(workflow, /include-hidden-files:\s*true/);
 });
