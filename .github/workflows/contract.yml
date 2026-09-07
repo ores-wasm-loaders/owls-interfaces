@@ -22,31 +22,50 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22'
+      - name: Check Contract IR verifier syntax
+        run: node --check scripts/verify-contract-ir.mjs
       - name: Run release contract and browser-entry tests
         run: node --test test/*.test.mjs
 
   peer-authority-parity:
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - name: Check out exact revision
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
-      - name: Generate comparison-only Schema B and compare both authorities
-        uses: ORESoftware/typespec-json-schema-validator@3822508a667d36f9e094f84aa57b1b2944230852
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Check out the exact Contract IR verifier implementation
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: ORESoftware/typespec-json-schema-validator
+          ref: 3171025cbe03a7026a71ce94eea18c910e1431b2
+          path: .tools/typespec-json-schema-validator
+          persist-credentials: false
+      - name: Install the verifier's lockfile-pinned toolchain
+        working-directory: .tools/typespec-json-schema-validator
+        run: npm ci --omit=dev
+      - name: Generate Schema B, compare both authorities, and emit Contract IR
+        uses: ORESoftware/typespec-json-schema-validator@3171025cbe03a7026a71ce94eea18c910e1431b2
         with:
           typespec: contracts/main.tsp
           schema: schemas/release.schema.json
           report: .typespec-json-schema-validator/report.json
+          contract_ir: .typespec-json-schema-validator/contract-ir.json
           output_dir: .typespec-json-schema-validator/generated
           max_probes: '96'
-      - name: Preserve parity receipt and generated comparison evidence
+      - name: Verify Contract IR against the exact receipt and current source closure
+        run: node scripts/verify-contract-ir.mjs
+      - name: Preserve receipt, Schema B, SARIF, Contract IR, and verification evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: typespec-json-schema-parity
+          name: typespec-json-schema-contract-admission
           path: .typespec-json-schema-validator/
-          if-no-files-found: warn
+          if-no-files-found: error
           retention-days: 30
           include-hidden-files: true
