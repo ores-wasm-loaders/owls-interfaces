@@ -89,5 +89,6 @@ Future<void> main() async {
     // Expected.
   }
 
-  stdout.writeln('PASS: ${fixtures.length} Dart release fixtures round-tripped');
+  stdout
+      .writeln('PASS: ${fixtures.length} Dart release fixtures round-tripped');
 }
