@@ -22,9 +22,12 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22'
-      - name: Check Contract IR verifier syntax
-        run: node --check scripts/verify-contract-ir.mjs
-      - name: Run release contract and browser-entry tests
+      - name: Check admission scripts
+        run: |
+          set -euo pipefail
+          node --check scripts/verify-contract-ir.mjs
+          node --check scripts/check-language-projections.mjs
+      - name: Run release contract and projection-policy tests
         run: node --test test/*.test.mjs
 
   peer-authority-parity:
@@ -60,7 +63,9 @@ jobs:
           max_probes: '96'
       - name: Verify Contract IR against the exact receipt and current source closure
         run: node scripts/verify-contract-ir.mjs
-      - name: Preserve receipt, Schema B, SARIF, Contract IR, and verification evidence
+      - name: Bind all language projections to the admitted Contract IR
+        run: node scripts/check-language-projections.mjs
+      - name: Preserve receipt, Schema B, SARIF, Contract IR, and projection evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
@@ -69,3 +74,121 @@ jobs:
           if-no-files-found: error
           retention-days: 30
           include-hidden-files: true
+
+  typescript:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install the exact TypeScript compiler
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Compile the TypeScript release projection
+        run: ./node_modules/.bin/tsc --project typescript/tsconfig.json --pretty false
+
+  rust:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Install exact Rust toolchain
+        run: rustup toolchain install 1.94.0 --profile minimal --component rustfmt,clippy
+      - name: Check formatting
+        working-directory: rust
+        run: cargo +1.94.0 fmt --all -- --check
+      - name: Lint with warnings denied
+        working-directory: rust
+        run: cargo +1.94.0 clippy --locked --all-targets -- -D warnings
+      - name: Compile and run v1/v2 fixture tests
+        working-directory: rust
+        run: cargo +1.94.0 test --locked
+
+  go:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Set up exact Go toolchain
+        uses: actions/setup-go@924ae9e48b11f7130603a31e65b80f8eaa794b7b # v6
+        with:
+          go-version: '1.23.2'
+          cache: false
+      - name: Check formatting, vet, and fixtures
+        working-directory: go
+        run: |
+          set -euo pipefail
+          test -z "$(gofmt -l .)"
+          go vet ./...
+          go test ./...
+
+  dart:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Check out exact Flutter and Dart SDK
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: flutter/flutter
+          ref: 05db9689081f091050f01aed79f04dce0c750154
+          path: flutter-sdk
+          persist-credentials: false
+      - name: Check formatting, analyze, and round-trip fixtures
+        working-directory: dart
+        run: |
+          set -euo pipefail
+          export PATH="$GITHUB_WORKSPACE/flutter-sdk/bin:$PATH"
+          flutter config --no-analytics
+          dart --version
+          dart pub get --enforce-lockfile
+          dart format lib bin
+          git diff --exit-code -- lib bin
+          dart analyze
+          dart run bin/fixture_check.dart
+
+  gleam:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Install checksum-pinned Gleam 1.18.1
+        run: |
+          set -euo pipefail
+          archive="$RUNNER_TEMP/gleam.tar.gz"
+          directory="$RUNNER_TEMP/gleam"
+          curl --fail --location --silent --show-error --retry 3 \
+            https://github.com/gleam-lang/gleam/releases/download/v1.18.1/gleam-v1.18.1-x86_64-unknown-linux-musl.tar.gz \
+            --output "$archive"
+          echo '4955a38c2e8c99457458e2471472ccd5ee3c45bd7637a315ce33bccf0dd75d9e  '"$archive" | sha256sum --check --strict
+          mkdir -p "$directory"
+          tar -xzf "$archive" -C "$directory"
+          binary="$(find "$directory" -type f -name gleam -perm -u+x | head -n 1)"
+          test -n "$binary"
+          echo "$(dirname "$binary")" >> "$GITHUB_PATH"
+      - name: Check formatting and compile the Gleam projection
+        working-directory: gleam
+        run: |
+          set -euo pipefail
+          gleam --version
+          gleam format src
+          git diff --exit-code -- src
+          gleam check
