@@ -48,8 +48,7 @@ Map<String, dynamic> normalizeWasmReleaseJson(Object? value) {
     release['assets'] = List<dynamic>.generate(assets.length, (index) {
       final asset = _objectCopy(assets[index], r'$.assets[]');
       if (asset.containsKey('bytes')) {
-        asset['bytes'] =
-            _jsonInteger(asset['bytes'], r'$.assets[].bytes');
+        asset['bytes'] = _jsonInteger(asset['bytes'], r'$.assets[].bytes');
       }
       return asset;
     }, growable: false);
