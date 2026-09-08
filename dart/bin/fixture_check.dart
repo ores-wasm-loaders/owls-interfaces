@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:owls_interfaces/json.dart';
 import 'package:owls_interfaces/owls_interfaces.dart';
 
 bool deepEqual(Object? left, Object? right) {
@@ -38,7 +39,7 @@ Future<void> main() async {
     if (decoded is! Map<String, dynamic>) {
       fail('${fixture.path}: root must be an object');
     }
-    final release = WasmRelease.fromJson(decoded);
+    final release = parseWasmReleaseJson(decoded);
     sawV1 = sawV1 || release.schemaVersion == 1;
     sawV2 = sawV2 || release.schemaVersion == 2;
     if (!deepEqual(decoded, release.toJson())) {
@@ -53,7 +54,7 @@ Future<void> main() async {
   }
   if (!sawV1 || !sawV2) fail('both schema generations must remain consumable');
 
-  final extensionProbe = WasmRelease.fromJson({
+  final extensionProbe = parseWasmReleaseJson({
     'schemaVersion': 2,
     'appId': 'extension-probe',
     'release': 'r1',
@@ -82,6 +83,51 @@ Future<void> main() async {
     // Expected.
   }
 
+  final integerValuedInput = <String, dynamic>{
+    'schemaVersion': 2.0,
+    'appId': 'integer-probe',
+    'release': 'r1',
+    'runtime': 'raw-wasm',
+    'entrypoint': 'main',
+    'assets': [
+      <String, dynamic>{
+        'id': 'main',
+        'url': 'https://assets.example/main.wasm',
+        'kind': 'wasm',
+        'bytes': 8.0,
+        'sha256': List.filled(64, '0').join(),
+        'prepare': true,
+      },
+    ],
+    'prepareBudget': <String, dynamic>{
+      'maxBytes': 1024.0,
+      'maxConcurrency': 2.0,
+      'furthestStage': 'fetch',
+    },
+  };
+  final integerProbe = parseWasmReleaseJson(integerValuedInput);
+  if (integerProbe.schemaVersion != 2 ||
+      integerProbe.assets.single.bytes != 8 ||
+      integerProbe.prepareBudget?.maxBytes != 1024 ||
+      integerProbe.prepareBudget?.maxConcurrency != 2) {
+    fail('integer-valued JSON numbers were not normalized');
+  }
+  if (integerValuedInput['schemaVersion'] != 2.0 ||
+      (integerValuedInput['assets'] as List).single['bytes'] != 8.0) {
+    fail('JSON integer normalization mutated the caller document');
+  }
+
+  for (final invalid in [2.5, double.nan, double.infinity]) {
+    final probe = Map<String, dynamic>.from(integerValuedInput)
+      ..['schemaVersion'] = invalid;
+    try {
+      parseWasmReleaseJson(probe);
+      fail('invalid JSON integer $invalid was accepted');
+    } on FormatException {
+      // Expected.
+    }
+  }
+
   try {
     RuntimeKind.fromWire('unknown-runtime');
     fail('unknown runtime was accepted');
@@ -89,6 +135,8 @@ Future<void> main() async {
     // Expected.
   }
 
-  stdout
-      .writeln('PASS: ${fixtures.length} Dart release fixtures round-tripped');
+  stdout.writeln(
+    'PASS: ${fixtures.length} Dart release fixtures round-tripped; '
+    'integer-valued JSON normalization passed',
+  );
 }
