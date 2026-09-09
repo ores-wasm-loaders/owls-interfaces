@@ -3,10 +3,16 @@
 `main.tsp` and `../schemas/release.schema.json` are independently authored peer authorities.
 Neither file is generated from the other and neither has precedence.
 
-CI compiles TypeSpec into a temporary **Schema B** with the pinned official TypeSpec JSON Schema
-emitter, compares its declaration inventory and normalized semantics with independently authored
-**Schema A**, and runs differential instance probes. The emitted file is evidence only; it is never
-committed over Schema A.
+CI uses the immutable, reviewed `ORESoftware/typespec-json-schema-validator` (`tjsv`) revision
+pinned in `.github/workflows/contract.yml`. It compiles TypeSpec into a temporary **Schema B**
+with the official TypeSpec JSON Schema emitter, compares its declaration inventory and normalized
+semantics with independently authored **Schema A**, and runs differential instance probes. The
+emitted file is evidence only; it is never committed over Schema A.
+
+The checked-in release fixtures are also staged into TJSV's `Release/valid` instance corpus in CI.
+That makes real Leptos, Dioxus, Flutter, and legacy release payloads a third independently maintained
+semantic witness: both authored authorities must accept every fixture. The corpus is copied only into
+the ephemeral evidence directory; the authored fixtures remain the source files under `fixtures/`.
 
 When the two authorities disagree, change both deliberately or stop for evaluation. Do not add a
 mapping merely to hide a real wire-level difference. Explicit named enums, scalars, records, and
@@ -22,14 +28,22 @@ independent TypeSpec and authored JSON Schema lanes, the comparison-only Schema 
 source digests, the parity receipt digest and run ID, admitted declarations, coverage, and its own
 content digest.
 
-CI immediately reloads the current TypeSpec source, generated Schema B, authored Schema A, receipt,
-and Contract IR and calls the validator's `verifyContractIr()` API. Promotion stops unless the
-artifact is self-consistent, still matches the exact source closure, preserves `precedence: none`,
-and admits the core `Release`, `Asset`, `PrepareBudget`, and `Activation` declarations. A stopped or
-failed parity run leaves a non-admissible tombstone rather than a stale green IR.
+CI verifies that evidence twice. First, the canonical TJSV
+`actions/verify-contract-ir` consumer gate rebuilds the current source closure and requires the
+complete 23-declaration `Ores.WasmLoaders.*` inventory before writing a self-digesting
+`consumer-verification.json` receipt. Second, the repository-local verifier reloads the current
+TypeSpec source, generated Schema B, authored Schema A, receipt, and Contract IR and calls the
+validator's `verifyContractIr()` API. Promotion stops unless both checks remain self-consistent,
+match the exact source closure, preserve `precedence: none`, and admit the expected declarations.
+A stopped or failed parity run leaves no stale evidence that can be treated as current admission.
 
-The receipt, Schema B, SARIF presentation, Contract IR, and verification evidence are uploaded as a
-single short-lived CI artifact. They are not committed into either authored lane. Any future
-TypeScript, Dart, Rust, Go, Gleam, Protobuf, WIT, OpenAPI, SQL, or ORM projection must record at
-least the Contract IR schema, `irId`, parity receipt `runId`, generator identity, and generator
-options digest; it must reject missing, stale, tampered, incomplete, or tombstoned evidence.
+The five current language projections are then checked against the admitted Contract IR before
+their native compile/test jobs run: TypeScript, Rust, Dart, Go, and Gleam must expose the complete
+admitted declaration set and matching enum/model members. The parity receipt, Schema B, SARIF,
+Contract IR, consumer verification, runtime corpus, and projection evidence are uploaded together
+as short-lived CI evidence. None is promoted to editable authority.
+
+Any future TypeScript, Dart, Rust, Go, Gleam, Protobuf, WIT, OpenAPI, SQL, ORM, client, or server
+projection must bind itself to current parity-approved evidence and reject missing, stale, tampered,
+incomplete, or tombstoned inputs. New language/runtime support does not weaken the peer-authority
+rule: unexplained divergence remains `STOPPED_FOR_EVALUATION` rather than choosing a preferred lane.
