@@ -1,11 +1,8 @@
 // The release contract in one place: validate a document, normalize v1 into v2's shape, and
-// answer the two questions every host asks — "what may I prepare, in what order?" and "what
-// does activation mean for this release?".
+// answer the questions every host asks about preparation and activation.
 //
-// Structure is the schema's job. This module owns the invariants a schema cannot express:
-// identity, ordering, budget coherence, and the per-runtime rules about what may be prepared
-// at all. All of them fail closed, because each one is a way for a page to do something on a
-// visitor's behalf that the visitor did not ask for.
+// Structure is the schema's job. This module owns invariants a schema cannot express:
+// identity, ordering, dependency-graph coherence, budget coherence, and per-runtime rules.
 
 import { validateAgainst } from './validate.mjs';
 
@@ -18,12 +15,9 @@ export class LoaderError extends Error {
 }
 
 export const CURRENT_SCHEMA_VERSION = 2;
-
-/** Preparation order: entrypoint roles first, then critical, then optional. Never lazy. */
 const STAGE_ORDER = { critical: 0, optional: 1, lazy: 2 };
 const ROLE_ORDER = { bootstrap: 0, glue: 1, module: 2, chunk: 3, fallback: 4, asset: 5 };
 
-/** v1 said only `prepare: true|false`; v2 grades it. A v1 document keeps meaning exactly what it meant. */
 export function stageOf(asset) {
   return asset.stage ?? (asset.prepare ? 'critical' : 'lazy');
 }
@@ -42,11 +36,6 @@ export function releaseKey(release) {
   return `${release.appId}@${release.release}`;
 }
 
-/**
- * A URL that satisfies the schema pattern can still be unparseable, or point somewhere this
- * page is not allowed to fetch from. Report either as a declared LoaderError rather than
- * leaking the parser's TypeError to the caller.
- */
 export function assertAssetUrl(raw, origins) {
   let url;
   try {
@@ -75,6 +64,47 @@ function freezeDeep(value) {
   }
 }
 
+function graphProblems(release, ids) {
+  const problems = [];
+  const assets = new Map();
+  for (const asset of release.assets) if (!assets.has(asset.id)) assets.set(asset.id, asset);
+
+  for (const asset of release.assets) {
+    const seen = new Set();
+    for (const dependency of asset.dependencies ?? []) {
+      if (seen.has(dependency)) problems.push(`asset \`${asset.id}\` repeats dependency \`${dependency}\``);
+      seen.add(dependency);
+      if (dependency === asset.id) problems.push(`asset \`${asset.id}\` cannot depend on itself`);
+      else if (!ids.has(dependency)) problems.push(`asset \`${asset.id}\` depends on missing asset \`${dependency}\``);
+    }
+  }
+
+  const visiting = new Set();
+  const visited = new Set();
+  const reported = new Set();
+  const visit = (id, path) => {
+    if (visited.has(id)) return;
+    if (visiting.has(id)) {
+      const start = path.indexOf(id);
+      const cycle = [...path.slice(start), id].join(' -> ');
+      if (!reported.has(cycle)) problems.push(`asset dependency cycle: ${cycle}`);
+      reported.add(cycle);
+      return;
+    }
+    visiting.add(id);
+    const asset = assets.get(id);
+    if (asset) {
+      for (const dependency of asset.dependencies ?? []) {
+        if (assets.has(dependency) && dependency !== id) visit(dependency, [...path, id]);
+      }
+    }
+    visiting.delete(id);
+    visited.add(id);
+  };
+  for (const id of assets.keys()) visit(id, []);
+  return problems;
+}
+
 /** Invariants no JSON Schema can state. Returns a list of problems; empty means coherent. */
 export function releaseProblems(release) {
   const problems = [];
@@ -100,6 +130,7 @@ export function releaseProblems(release) {
       problems.push(`asset \`${asset.id}\` is staged \`${asset.stage}\` but marked prepare:false — a host would never reach it`);
     }
   }
+  problems.push(...graphProblems(release, ids));
 
   if (release.runtime === 'wasm-bindgen') {
     const hasModule = release.assets.some((a) => roleOf(a, release) === 'module' && a.kind === 'wasm');
@@ -143,10 +174,6 @@ export function releaseProblems(release) {
   return problems;
 }
 
-/**
- * Validate, check the invariants, enforce the origin allowlist, and return a frozen,
- * detached snapshot. The caller's object is never retained or mutated.
- */
 export function parseRelease(input, origins, schema) {
   const structural = validateAgainst(input, schema);
   if (structural.length) {
@@ -162,14 +189,6 @@ export function parseRelease(input, origins, schema) {
   return release;
 }
 
-/**
- * What preparation may take, in the order it should take it.
- *
- * `prepare: false` is never included — that is the v1 authority and it still decides. Lazy
- * assets are excluded even when marked preparable. `variant` drops the startup path this
- * runtime will not use, so a Flutter page does not pull both the WasmGC module and the full
- * JS fallback.
- */
 export function preparableAssets(release, { variant = 'module' } = {}) {
   const drop = variant === 'module' ? 'fallback' : 'module';
   return release.assets
@@ -180,7 +199,29 @@ export function preparableAssets(release, { variant = 'module' } = {}) {
     .map((entry) => entry.asset);
 }
 
-/** The asset a route activates, longest declared prefix first. */
+/** Return a dependency-first, duplicate-free closure ending with the requested asset. */
+export function dependencyClosure(release, assetId) {
+  const assets = new Map(release.assets.map((asset) => [asset.id, asset]));
+  if (!assets.has(assetId)) throw new LoaderError('manifest', `Unknown dependency root \`${assetId}\``);
+  const visiting = new Set();
+  const visited = new Set();
+  const ordered = [];
+  const visit = (id) => {
+    if (visited.has(id)) return;
+    if (visiting.has(id)) throw new LoaderError('manifest', `Dependency cycle encountered while traversing \`${id}\``);
+    const asset = assets.get(id);
+    if (!asset) throw new LoaderError('manifest', `Dependency references missing asset \`${id}\``);
+    visiting.add(id);
+    for (const dependency of asset.dependencies ?? []) visit(dependency);
+    visiting.delete(id);
+    visited.add(id);
+    ordered.push(asset);
+  };
+  visit(assetId);
+  return ordered;
+}
+
+/** The asset id a route activates, longest declared prefix first. */
 export function chunkForRoute(release, route) {
   const routes = release.activation?.routes ?? {};
   if (routes[route]) return routes[route];
@@ -188,4 +229,10 @@ export function chunkForRoute(release, route) {
     .filter((r) => route === r || route.startsWith(r.endsWith('/') ? r : `${r}/`))
     .sort((a, b) => b.length - a.length)[0];
   return prefix ? routes[prefix] : null;
+}
+
+/** Dependency-first asset closure for the resolved route target. */
+export function dependencyClosureForRoute(release, route) {
+  const assetId = chunkForRoute(release, route);
+  return assetId ? dependencyClosure(release, assetId) : [];
 }
