@@ -120,7 +120,7 @@ pub type RecordString =
 pub type RecordUnknown =
   List(#(String, JsonValue))
 
-// @contract-ir Asset model bytes|id|kind|prepare|role|sha256|stage|url
+// @contract-ir Asset model bytes|dependencies|id|kind|prepare|role|sha256|stage|url
 pub type Asset {
   Asset(
     id: AssetId,
@@ -128,6 +128,7 @@ pub type Asset {
     kind: AssetKind,
     role: Maybe(AssetRole),
     stage: Maybe(AssetStage),
+    dependencies: Maybe(List(AssetId)),
     bytes: Int,
     sha256: Sha256Hex,
     prepare: Bool,
