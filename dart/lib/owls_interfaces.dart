@@ -184,27 +184,30 @@ void _expectKeys(
   }
 }
 
-// @contract-ir Asset model bytes|id|kind|prepare|role|sha256|stage|url
+// @contract-ir Asset model bytes|dependencies|id|kind|prepare|role|sha256|stage|url
 class WasmAsset {
   final AssetId id;
   final HttpsAssetUrl url;
   final String kind;
   final String? role;
   final String? stage;
+  final List<AssetId>? dependencies;
   final int bytes;
   final Sha256Hex sha256;
   final bool prepare;
 
-  const WasmAsset({
+  WasmAsset({
     required this.id,
     required this.url,
     required this.kind,
     this.role,
     this.stage,
+    List<AssetId>? dependencies,
     required this.bytes,
     required this.sha256,
     required this.prepare,
-  });
+  }) : dependencies =
+            dependencies == null ? null : List.unmodifiable(dependencies);
 
   AssetKind get kindValue => AssetKind.fromWire(kind);
   AssetRole? get roleValue => role == null ? null : AssetRole.fromWire(role);
@@ -220,6 +223,7 @@ class WasmAsset {
         'kind',
         'role',
         'stage',
+        'dependencies',
         'bytes',
         'sha256',
         'prepare'
@@ -232,12 +236,16 @@ class WasmAsset {
     if (role != null) AssetRole.fromWire(role);
     final stage = json['stage'];
     if (stage != null) AssetStage.fromWire(stage);
+    final dependencies = json['dependencies'];
     return WasmAsset(
       id: _requiredString(json, 'id'),
       url: _requiredString(json, 'url'),
       kind: kind,
       role: role as String?,
       stage: stage as String?,
+      dependencies: dependencies == null
+          ? null
+          : List<String>.from(dependencies as List<dynamic>),
       bytes: _requiredInt(json, 'bytes'),
       sha256: _requiredString(json, 'sha256'),
       prepare: _requiredBool(json, 'prepare'),
@@ -250,6 +258,7 @@ class WasmAsset {
         'kind': kind,
         if (role != null) 'role': role,
         if (stage != null) 'stage': stage,
+        if (dependencies != null) 'dependencies': dependencies,
         'bytes': bytes,
         'sha256': sha256,
         'prepare': prepare,
