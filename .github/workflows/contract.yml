@@ -9,6 +9,9 @@ on:
 permissions:
   contents: read
 
+env:
+  TSJSV_REF: 6bb5b7c1ee41c8b43741e50a264c33a1165549c4
+
 jobs:
   node:
     runs-on: ubuntu-24.04
@@ -46,14 +49,21 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: ORESoftware/typespec-json-schema-validator
-          ref: 3171025cbe03a7026a71ce94eea18c910e1431b2
+          ref: ${{ env.TSJSV_REF }}
           path: .tools/typespec-json-schema-validator
           persist-credentials: false
       - name: Install the verifier's lockfile-pinned toolchain
         working-directory: .tools/typespec-json-schema-validator
         run: npm ci --omit=dev
+      - name: Verify immutable validator source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${#TSJSV_REF}" -eq 40
+          case "$TSJSV_REF" in *[!0-9a-f]*) exit 1 ;; esac
+          test "$(git -C .tools/typespec-json-schema-validator rev-parse HEAD)" = "$TSJSV_REF"
       - name: Generate Schema B, compare both authorities, and emit Contract IR
-        uses: ORESoftware/typespec-json-schema-validator@3171025cbe03a7026a71ce94eea18c910e1431b2
+        uses: ORESoftware/typespec-json-schema-validator@6bb5b7c1ee41c8b43741e50a264c33a1165549c4
         with:
           typespec: contracts/main.tsp
           schema: schemas/release.schema.json
@@ -61,6 +71,7 @@ jobs:
           contract_ir: .typespec-json-schema-validator/contract-ir.json
           output_dir: .typespec-json-schema-validator/generated
           max_probes: '96'
+          quiet: 'true'
       - name: Verify Contract IR against the exact receipt and current source closure
         run: node scripts/verify-contract-ir.mjs
       - name: Bind all language projections to the admitted Contract IR
