@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 env:
-  TSJSV_REF: 6bb5b7c1ee41c8b43741e50a264c33a1165549c4
+  TSJSV_REF: 03ccc0ecdfc70f9198c3ccf80718910961d3fde1
 
 jobs:
   node:
@@ -63,7 +63,7 @@ jobs:
           case "$TSJSV_REF" in *[!0-9a-f]*) exit 1 ;; esac
           test "$(git -C .tools/typespec-json-schema-validator rev-parse HEAD)" = "$TSJSV_REF"
       - name: Generate Schema B, compare both authorities, and emit Contract IR
-        uses: ORESoftware/typespec-json-schema-validator@6bb5b7c1ee41c8b43741e50a264c33a1165549c4
+        uses: ORESoftware/typespec-json-schema-validator@03ccc0ecdfc70f9198c3ccf80718910961d3fde1
         with:
           typespec: contracts/main.tsp
           schema: schemas/release.schema.json
