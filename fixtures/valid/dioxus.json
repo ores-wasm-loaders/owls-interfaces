@@ -46,7 +46,10 @@
       "sha256": "3473754009502da1e12796783943cd3a7ff6fb2379f41ede76b4b830c2cc9036",
       "prepare": true,
       "role": "chunk",
-      "stage": "critical"
+      "stage": "critical",
+      "dependencies": [
+        "chunks-app.wasm"
+      ]
     },
     {
       "id": "app.css",

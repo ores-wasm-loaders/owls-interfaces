@@ -122,6 +122,12 @@ model Asset {
   kind: AssetKind;
   role?: AssetRole;
   stage?: AssetStage;
+
+  // Optional dependency edges let a host prepare an emitted split-module closure without
+  // executing framework glue. Cross-record existence/acyclicity is enforced by admission.
+  @maxItems(64)
+  dependencies?: AssetId[];
+
   @minValue(1)
   @maxValue(268435456)
   bytes: int32;

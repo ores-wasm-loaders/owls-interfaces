@@ -13,6 +13,8 @@ export {
   assetKey,
   releaseKey,
   preparableAssets,
+  dependencyClosure,
+  dependencyClosureForRoute,
   chunkForRoute,
   stageOf,
   roleOf,

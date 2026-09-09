@@ -130,7 +130,7 @@ pub type RecordString = BTreeMap<String, String>;
 // @contract-ir RecordUnknown model
 pub type RecordUnknown = BTreeMap<String, serde_json::Value>;
 
-// @contract-ir Asset model bytes|id|kind|prepare|role|sha256|stage|url
+// @contract-ir Asset model bytes|dependencies|id|kind|prepare|role|sha256|stage|url
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Asset {
@@ -141,6 +141,8 @@ pub struct Asset {
     pub role: Option<AssetRole>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub stage: Option<AssetStage>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub dependencies: Option<Vec<AssetId>>,
     pub bytes: u64,
     pub sha256: Sha256Hex,
     pub prepare: bool,

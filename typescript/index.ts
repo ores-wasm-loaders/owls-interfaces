@@ -51,13 +51,14 @@ export type RecordString = Readonly<Record<string, string>>;
 // @contract-ir RecordUnknown model
 export type RecordUnknown = Readonly<Record<string, JsonValue>>;
 
-// @contract-ir Asset model bytes|id|kind|prepare|role|sha256|stage|url
+// @contract-ir Asset model bytes|dependencies|id|kind|prepare|role|sha256|stage|url
 export interface Asset {
   readonly id: AssetId;
   readonly url: HttpsAssetUrl;
   readonly kind: AssetKind;
   readonly role?: AssetRole;
   readonly stage?: AssetStage;
+  readonly dependencies?: readonly AssetId[];
   readonly bytes: number;
   readonly sha256: Sha256Hex;
   readonly prepare: boolean;
