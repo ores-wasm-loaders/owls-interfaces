@@ -9,86 +9,49 @@
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "$id": "SchemaVersion",
       "type": "number",
-      "enum": [
-        1,
-        2
-      ]
+      "enum": [1, 2]
     },
     "RuntimeKind": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "$id": "RuntimeKind",
       "type": "string",
-      "enum": [
-        "raw-wasm",
-        "wasm-bindgen",
-        "flutter-web"
-      ]
+      "enum": ["raw-wasm", "wasm-bindgen", "flutter-web"]
     },
     "FrameworkKind": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "$id": "FrameworkKind",
       "type": "string",
-      "enum": [
-        "leptos",
-        "dioxus",
-        "flutter",
-        "none"
-      ]
+      "enum": ["leptos", "dioxus", "flutter", "none"]
     },
     "AssetKind": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "$id": "AssetKind",
       "type": "string",
-      "enum": [
-        "wasm",
-        "module",
-        "script",
-        "data",
-        "font"
-      ]
+      "enum": ["wasm", "module", "script", "data", "font"]
     },
     "AssetRole": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "$id": "AssetRole",
       "type": "string",
-      "enum": [
-        "bootstrap",
-        "glue",
-        "module",
-        "fallback",
-        "chunk",
-        "asset"
-      ]
+      "enum": ["bootstrap", "glue", "module", "fallback", "chunk", "asset"]
     },
     "AssetStage": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "$id": "AssetStage",
       "type": "string",
-      "enum": [
-        "critical",
-        "optional",
-        "lazy"
-      ]
+      "enum": ["critical", "optional", "lazy"]
     },
     "PrepareStage": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "$id": "PrepareStage",
       "type": "string",
-      "enum": [
-        "fetch",
-        "compile"
-      ]
+      "enum": ["fetch", "compile"]
     },
     "ActivationMode": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "$id": "ActivationMode",
       "type": "string",
-      "enum": [
-        "attach-view",
-        "hydrate-islands",
-        "mount-route",
-        "run-app"
-      ]
+      "enum": ["attach-view", "hydrate-islands", "mount-route", "run-app"]
     },
     "AssetId": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -147,9 +110,7 @@
       "$id": "RecordString",
       "type": "object",
       "properties": {},
-      "unevaluatedProperties": {
-        "type": "string"
-      }
+      "unevaluatedProperties": {"type": "string"}
     },
     "RecordUnknown": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -163,41 +124,25 @@
       "$id": "Asset",
       "type": "object",
       "properties": {
-        "id": {
-          "$ref": "AssetId"
-        },
-        "url": {
-          "$ref": "HttpsAssetUrl"
-        },
-        "kind": {
-          "$ref": "AssetKind"
-        },
-        "role": {
-          "$ref": "AssetRole"
-        },
-        "stage": {
-          "$ref": "AssetStage"
+        "id": {"$ref": "AssetId"},
+        "url": {"$ref": "HttpsAssetUrl"},
+        "kind": {"$ref": "AssetKind"},
+        "role": {"$ref": "AssetRole"},
+        "stage": {"$ref": "AssetStage"},
+        "dependencies": {
+          "type": "array",
+          "items": {"$ref": "AssetId"},
+          "maxItems": 64
         },
         "bytes": {
           "type": "integer",
           "minimum": 1,
           "maximum": 268435456
         },
-        "sha256": {
-          "$ref": "Sha256Hex"
-        },
-        "prepare": {
-          "type": "boolean"
-        }
+        "sha256": {"$ref": "Sha256Hex"},
+        "prepare": {"type": "boolean"}
       },
-      "required": [
-        "id",
-        "url",
-        "kind",
-        "bytes",
-        "sha256",
-        "prepare"
-      ],
+      "required": ["id", "url", "kind", "bytes", "sha256", "prepare"],
       "unevaluatedProperties": false
     },
     "PrepareBudget": {
@@ -215,15 +160,9 @@
           "minimum": 1,
           "maximum": 16
         },
-        "furthestStage": {
-          "$ref": "PrepareStage"
-        }
+        "furthestStage": {"$ref": "PrepareStage"}
       },
-      "required": [
-        "maxBytes",
-        "maxConcurrency",
-        "furthestStage"
-      ],
+      "required": ["maxBytes", "maxConcurrency", "furthestStage"],
       "unevaluatedProperties": false
     },
     "Activation": {
@@ -231,26 +170,16 @@
       "$id": "Activation",
       "type": "object",
       "properties": {
-        "mode": {
-          "$ref": "ActivationMode"
-        },
-        "hostSelector": {
-          "$ref": "HostSelector"
-        },
+        "mode": {"$ref": "ActivationMode"},
+        "hostSelector": {"$ref": "HostSelector"},
         "islands": {
           "type": "array",
-          "items": {
-            "$ref": "IslandName"
-          },
+          "items": {"$ref": "IslandName"},
           "maxItems": 256
         },
-        "routes": {
-          "$ref": "RecordString"
-        }
+        "routes": {"$ref": "RecordString"}
       },
-      "required": [
-        "mode"
-      ],
+      "required": ["mode"],
       "unevaluatedProperties": false
     },
     "Release": {
@@ -258,56 +187,25 @@
       "$id": "Release",
       "type": "object",
       "properties": {
-        "schemaVersion": {
-          "$ref": "SchemaVersion"
-        },
-        "appId": {
-          "$ref": "ApplicationId"
-        },
-        "release": {
-          "$ref": "ReleaseId"
-        },
-        "runtime": {
-          "$ref": "RuntimeKind"
-        },
-        "framework": {
-          "$ref": "FrameworkKind"
-        },
-        "toolchain": {
-          "$ref": "ToolchainId"
-        },
-        "entrypoint": {
-          "$ref": "EntrypointId"
-        },
-        "requiresCrossOriginIsolation": {
-          "type": "boolean"
-        },
+        "schemaVersion": {"$ref": "SchemaVersion"},
+        "appId": {"$ref": "ApplicationId"},
+        "release": {"$ref": "ReleaseId"},
+        "runtime": {"$ref": "RuntimeKind"},
+        "framework": {"$ref": "FrameworkKind"},
+        "toolchain": {"$ref": "ToolchainId"},
+        "entrypoint": {"$ref": "EntrypointId"},
+        "requiresCrossOriginIsolation": {"type": "boolean"},
         "assets": {
           "type": "array",
-          "items": {
-            "$ref": "Asset"
-          },
+          "items": {"$ref": "Asset"},
           "minItems": 1,
           "maxItems": 512
         },
-        "prepareBudget": {
-          "$ref": "PrepareBudget"
-        },
-        "activation": {
-          "$ref": "Activation"
-        },
-        "extensions": {
-          "$ref": "RecordUnknown"
-        }
+        "prepareBudget": {"$ref": "PrepareBudget"},
+        "activation": {"$ref": "Activation"},
+        "extensions": {"$ref": "RecordUnknown"}
       },
-      "required": [
-        "schemaVersion",
-        "appId",
-        "release",
-        "runtime",
-        "entrypoint",
-        "assets"
-      ],
+      "required": ["schemaVersion", "appId", "release", "runtime", "entrypoint", "assets"],
       "unevaluatedProperties": false
     },
     "EntrypointId": {
