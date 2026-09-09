@@ -29,9 +29,14 @@ preparation budgets, supported activation modes, named islands, and declared rou
 ## Independent authorities and Contract IR
 
 `contracts/main.tsp` and `schemas/release.schema.json` are independently authored peer authorities.
-Neither is generated from or ranked above the other. CI emits a temporary JSON Schema B from
-TypeSpec, performs declaration and semantic comparison, runs differential probes, and stops on any
-unexplained difference.
+Neither is generated from or ranked above the other. CI uses an immutable commit of
+[`ORESoftware/typespec-json-schema-validator`](https://github.com/ORESoftware/typespec-json-schema-validator)
+to emit a temporary JSON Schema B from TypeSpec, perform declaration and semantic comparison, run
+differential probes, and stop on any unexplained difference.
+
+The same admitted Contract IR is then checked against the TypeScript, Rust, Dart, Go, and Gleam
+projections. This keeps the browser, native Rust, Flutter/Dart, Go, and BEAM-facing contract surfaces
+bound to one parity receipt without making either authored authority derivative of the other.
 
 A passing run emits deterministic Contract IR and immediately verifies it against the exact receipt
 and input digests. Contract IR and Schema B are downstream evidence only; they are never committed
