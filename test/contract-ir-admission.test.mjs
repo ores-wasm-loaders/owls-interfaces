@@ -3,15 +3,26 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const root = new URL('../', import.meta.url);
-const validatorRef = '3171025cbe03a7026a71ce94eea18c910e1431b2';
 
 test('CI emits and independently re-verifies a digest-bound Contract IR', async () => {
   const workflow = await readFile(new URL('.github/workflows/contract.yml', root), 'utf8');
-  assert.match(workflow, new RegExp(`ORESoftware/typespec-json-schema-validator@${validatorRef}`));
+  const declaredRef = workflow.match(/^\s*TSJSV_REF:\s*([0-9a-f]{40})\s*$/m)?.[1];
+  const actionRef = workflow.match(
+    /ORESoftware\/typespec-json-schema-validator@([0-9a-f]{40})/,
+  )?.[1];
+
+  assert.ok(declaredRef, 'validator source checkout must use an immutable commit');
+  assert.equal(
+    actionRef,
+    declaredRef,
+    'the verifier checkout and composite action must execute the same validator revision',
+  );
   assert.match(workflow, /contract_ir:\s*\.typespec-json-schema-validator\/contract-ir\.json/);
   assert.match(workflow, /repository:\s*ORESoftware\/typespec-json-schema-validator/);
-  assert.ok(workflow.includes(`ref: ${validatorRef}`), 'validator verification checkout must use the exact immutable ref');
+  assert.match(workflow, /ref:\s*\$\{\{ env\.TSJSV_REF \}\}/);
+  assert.match(workflow, /git -C \.tools\/typespec-json-schema-validator rev-parse HEAD/);
   assert.match(workflow, /node scripts\/verify-contract-ir\.mjs/);
+  assert.match(workflow, /node scripts\/check-language-projections\.mjs/);
   assert.match(workflow, /include-hidden-files:\s*true/);
 });
 
