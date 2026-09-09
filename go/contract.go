@@ -119,16 +119,17 @@ type RecordString map[string]string
 // @contract-ir RecordUnknown model
 type RecordUnknown map[string]any
 
-// @contract-ir Asset model bytes|id|kind|prepare|role|sha256|stage|url
+// @contract-ir Asset model bytes|dependencies|id|kind|prepare|role|sha256|stage|url
 type Asset struct {
-	ID      AssetID       `json:"id"`
-	URL     HTTPSAssetURL `json:"url"`
-	Kind    AssetKind     `json:"kind"`
-	Role    AssetRole     `json:"role,omitempty"`
-	Stage   AssetStage    `json:"stage,omitempty"`
-	Bytes   uint64        `json:"bytes"`
-	SHA256  SHA256Hex     `json:"sha256"`
-	Prepare bool          `json:"prepare"`
+	ID           AssetID       `json:"id"`
+	URL          HTTPSAssetURL `json:"url"`
+	Kind         AssetKind     `json:"kind"`
+	Role         AssetRole     `json:"role,omitempty"`
+	Stage        AssetStage    `json:"stage,omitempty"`
+	Dependencies []AssetID     `json:"dependencies,omitempty"`
+	Bytes        uint64        `json:"bytes"`
+	SHA256       SHA256Hex     `json:"sha256"`
+	Prepare      bool          `json:"prepare"`
 }
 
 // @contract-ir PrepareBudget model furthestStage|maxBytes|maxConcurrency
