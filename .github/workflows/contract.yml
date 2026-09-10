@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 env:
-  TSJSV_REF: 03ccc0ecdfc70f9198c3ccf80718910961d3fde1
+  TSJSV_REF: 8bf7ebda4e35c0d11b5b5e5f865867bee4fc3085
 
 jobs:
   node:
@@ -72,7 +72,7 @@ jobs:
           count="$(find "$corpus" -maxdepth 1 -type f -name '*.json' | wc -l)"
           test "$count" -eq 4
       - name: Generate Schema B, compare both authorities, and emit Contract IR
-        uses: ORESoftware/typespec-json-schema-validator@03ccc0ecdfc70f9198c3ccf80718910961d3fde1
+        uses: ORESoftware/typespec-json-schema-validator@8bf7ebda4e35c0d11b5b5e5f865867bee4fc3085
         with:
           typespec: contracts/main.tsp
           schema: schemas/release.schema.json
@@ -83,7 +83,7 @@ jobs:
           max_probes: '96'
           quiet: 'true'
       - name: Canonically verify Contract IR against current sources and complete scope
-        uses: ORESoftware/typespec-json-schema-validator/actions/verify-contract-ir@03ccc0ecdfc70f9198c3ccf80718910961d3fde1
+        uses: ORESoftware/typespec-json-schema-validator/actions/verify-contract-ir@8bf7ebda4e35c0d11b5b5e5f865867bee4fc3085
         with:
           contract_ir: .typespec-json-schema-validator/contract-ir.json
           report: .typespec-json-schema-validator/report.json
@@ -205,7 +205,7 @@ jobs:
           ref: 05db9689081f091050f01aed79f04dce0c750154
           path: flutter-sdk
           persist-credentials: false
-      - name: Check formatting, analyze, and exercise release/config projections
+      - name: Check formatting, analyze, and exercise config wire projection
         working-directory: dart
         run: |
           set -euo pipefail
