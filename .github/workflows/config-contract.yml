@@ -1,0 +1,102 @@
+name: config-contract
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  TSJSV_REF: 03ccc0ecdfc70f9198c3ccf80718910961d3fde1
+
+jobs:
+  peer-authority-parity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Check out exact TJSV verifier implementation
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: ORESoftware/typespec-json-schema-validator
+          ref: ${{ env.TSJSV_REF }}
+          path: .tools/typespec-json-schema-validator
+          persist-credentials: false
+      - name: Install verifier lockfile-pinned toolchain
+        working-directory: .tools/typespec-json-schema-validator
+        run: npm ci --omit=dev
+      - name: Verify immutable validator source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${#TSJSV_REF}" -eq 40
+          case "$TSJSV_REF" in *[!0-9a-f]*) exit 1 ;; esac
+          test "$(git -C .tools/typespec-json-schema-validator rev-parse HEAD)" = "$TSJSV_REF"
+      - name: Stage checked-in config fixtures as independent runtime corpus
+        shell: bash
+        run: |
+          set -euo pipefail
+          corpus=.typespec-json-schema-validator/config-instances/OresWasmConfig/valid
+          mkdir -p "$corpus"
+          cp fixtures/config/valid/*.json "$corpus"/
+          count="$(find "$corpus" -maxdepth 1 -type f -name '*.json' | wc -l)"
+          test "$count" -eq 2
+      - name: Generate Schema B, compare peer authorities, and emit Contract IR
+        uses: ORESoftware/typespec-json-schema-validator@03ccc0ecdfc70f9198c3ccf80718910961d3fde1
+        with:
+          typespec: contracts/config.tsp
+          schema: schemas/ores-wasm-config.schema.json
+          instances: .typespec-json-schema-validator/config-instances
+          report: .typespec-json-schema-validator/config-report.json
+          contract_ir: .typespec-json-schema-validator/config-contract-ir.json
+          output_dir: .typespec-json-schema-validator/config-generated
+          max_probes: '96'
+          quiet: 'true'
+      - name: Verify admitted config scope against current peer sources
+        uses: ORESoftware/typespec-json-schema-validator/actions/verify-contract-ir@03ccc0ecdfc70f9198c3ccf80718910961d3fde1
+        with:
+          contract_ir: .typespec-json-schema-validator/config-contract-ir.json
+          report: .typespec-json-schema-validator/config-report.json
+          typespec: contracts/config.tsp
+          schema: schemas/ores-wasm-config.schema.json
+          generated_schema: .typespec-json-schema-validator/config-generated/typespec.generated.schema.json
+          expected_declarations: >-
+            [
+              "Ores.WasmLoaders.ActivationPolicy",
+              "Ores.WasmLoaders.ConfigActivation",
+              "Ores.WasmLoaders.ConfigExtensions",
+              "Ores.WasmLoaders.ConfigPrepare",
+              "Ores.WasmLoaders.ConfigPrepareStage",
+              "Ores.WasmLoaders.ConfigTarget",
+              "Ores.WasmLoaders.ConfigVersion",
+              "Ores.WasmLoaders.EnvDeclaration",
+              "Ores.WasmLoaders.EnvDeclarationMap",
+              "Ores.WasmLoaders.EnvKey",
+              "Ores.WasmLoaders.EnvValueType",
+              "Ores.WasmLoaders.HostConfig",
+              "Ores.WasmLoaders.HostConfigMap",
+              "Ores.WasmLoaders.HostKind",
+              "Ores.WasmLoaders.OresWasmConfig",
+              "Ores.WasmLoaders.PrepareTrigger",
+              "Ores.WasmLoaders.RepoPath"
+            ]
+          verification: .typespec-json-schema-validator/config-consumer-verification.json
+      - name: Preserve config parity and admission evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ores-wasm-config-contract-admission
+          path: .typespec-json-schema-validator/
+          if-no-files-found: error
+          retention-days: 30
+          include-hidden-files: true

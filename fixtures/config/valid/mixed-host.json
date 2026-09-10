@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "enabled": true,
+  "hosts": {
+    "browser": {
+      "kind": "browser",
+      "root": ".",
+      "releaseManifest": "dist/client/release.json",
+      "allowedOrigins": ["https://cdn.example.com"],
+      "prepare": {"trigger": "idle", "maxConcurrency": 2, "furthestStage": "fetch"},
+      "activation": {"policy": "explicit"}
+    },
+    "server": {
+      "kind": "ssr",
+      "root": ".",
+      "releaseManifest": "dist/server/release.json",
+      "prepare": {"trigger": "explicit", "maxBytes": 16777216, "maxConcurrency": 2, "furthestStage": "compile"},
+      "activation": {"policy": "disabled"}
+    },
+    "mobile": {
+      "kind": "flutter",
+      "root": "apps/mobile",
+      "releaseManifest": "web/release.json",
+      "prepare": {"trigger": "explicit", "furthestStage": "fetch"},
+      "activation": {"policy": "startup"}
+    }
+  },
+  "env": {
+    "serverManifest": {
+      "env": "ORES_WASM_SERVER_MANIFEST",
+      "type": "string",
+      "target": "hosts.server.releaseManifest"
+    },
+    "featureMetadata": {
+      "env": "ORES_WASM_FEATURE_METADATA",
+      "type": "json",
+      "target": "extensions.featureMetadata"
+    }
+  },
+  "extensions": {
+    "owner": "platform"
+  }
+}

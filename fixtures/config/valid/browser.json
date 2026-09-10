@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "enabled": true,
+  "strict": true,
+  "hosts": {
+    "browser": {
+      "kind": "browser",
+      "root": "web",
+      "releaseManifest": "public/wasm/release.json",
+      "allowedOrigins": ["https://assets.example.com"],
+      "prepare": {
+        "trigger": "intent",
+        "maxBytes": 8388608,
+        "maxConcurrency": 4,
+        "furthestStage": "compile"
+      },
+      "activation": {
+        "policy": "route"
+      }
+    }
+  },
+  "env": {
+    "prepareMaxBytes": {
+      "env": "ORES_WASM_PREPARE_MAX_BYTES",
+      "type": "integer",
+      "target": "hosts.browser.prepare.maxBytes"
+    },
+    "assetOrigins": {
+      "env": "ORES_WASM_ALLOWED_ORIGINS",
+      "type": "array",
+      "target": "hosts.browser.allowedOrigins"
+    }
+  }
+}

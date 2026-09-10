@@ -2,7 +2,7 @@
   "name": "@ores-wasm-loaders/owls-interfaces",
   "version": "0.1.1",
   "type": "module",
-  "description": "Peer-authored TypeSpec and JSON Schema WASM release contracts with Contract-IR-gated TypeScript, Rust, Dart, Go, and Gleam projections.",
+  "description": "Peer-authored TypeSpec and JSON Schema WASM release/config contracts with Contract-IR-gated projections.",
   "types": "./typescript/index.d.ts",
   "exports": {
     ".": {
@@ -13,6 +13,7 @@
   "files": [
     "index.mjs",
     "release.mjs",
+    "config.mjs",
     "validate.mjs",
     "schemas/**",
     "contracts/**",

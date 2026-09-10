@@ -5,22 +5,29 @@ import {fileURLToPath} from 'node:url';
 import {readFile} from 'node:fs/promises';
 
 // Self-reference uses exactly the package-name export map used by npm consumers.
-test('JavaScript package-name import resolves the real runtime contract', async () => {
+test('JavaScript package-name import resolves release and config runtime contracts', async () => {
   const contract = await import('@ores-wasm-loaders/owls-interfaces');
   assert.equal(typeof contract.parseRelease, 'function');
   assert.equal(typeof contract.releaseSchema, 'object');
   assert.ok(Object.isFrozen(contract.releaseSchema));
+  assert.equal(typeof contract.parseOresWasmConfig, 'function');
+  assert.equal(typeof contract.resolveOresWasmEnv, 'function');
+  assert.equal(typeof contract.configSchema, 'object');
+  assert.ok(Object.isFrozen(contract.configSchema));
 });
-test('published archive includes every language projection, not dev caches or corpus', () => {
+test('published archive includes both peer config authorities and every release projection', () => {
   const cwd = fileURLToPath(new URL('../', import.meta.url));
   const [pack] = JSON.parse(execFileSync('npm', ['pack', '--dry-run', '--ignore-scripts', '--json'], {cwd, encoding:'utf8'}));
   const names = pack.files.map(file => file.path);
   for (const expected of [
     'index.mjs',
     'release.mjs',
+    'config.mjs',
     'validate.mjs',
     'schemas/release.schema.json',
+    'schemas/ores-wasm-config.schema.json',
     'contracts/main.tsp',
+    'contracts/config.tsp',
     'typescript/index.d.ts',
     'typescript/index.ts',
     'rust/src/lib.rs',

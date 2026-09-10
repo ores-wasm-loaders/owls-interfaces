@@ -1,0 +1,157 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.ores-wasm-loaders.dev/ores-wasm-config-v1.json",
+  "title": "OWLS repository configuration",
+  "description": "Independent JSON Schema authority for the semantic JSON form of .ores-wasm.toml. TypeSpec is a peer authority; generated output is comparison evidence only.",
+  "$ref": "#/$defs/OresWasmConfig",
+  "$defs": {
+    "ConfigVersion": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "ConfigVersion",
+      "type": "number",
+      "enum": [1]
+    },
+    "HostKind": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "HostKind",
+      "type": "string",
+      "enum": ["browser", "ssr", "worker", "rust-native", "flutter"]
+    },
+    "PrepareTrigger": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "PrepareTrigger",
+      "type": "string",
+      "enum": ["explicit", "intent", "idle", "disabled"]
+    },
+    "ConfigPrepareStage": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "ConfigPrepareStage",
+      "type": "string",
+      "enum": ["fetch", "compile"]
+    },
+    "ActivationPolicy": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "ActivationPolicy",
+      "type": "string",
+      "enum": ["explicit", "route", "startup", "disabled"]
+    },
+    "EnvValueType": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "EnvValueType",
+      "type": "string",
+      "enum": ["string", "integer", "bool", "double", "json", "array", "map"]
+    },
+    "RepoPath": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "RepoPath",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096
+    },
+    "EnvKey": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "EnvKey",
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9_]{0,127}$"
+    },
+    "ConfigTarget": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "ConfigTarget",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "ConfigPrepare": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "ConfigPrepare",
+      "type": "object",
+      "properties": {
+        "trigger": {"$ref": "PrepareTrigger"},
+        "maxBytes": {"type": "integer", "minimum": 0, "maximum": 268435456},
+        "maxConcurrency": {"type": "integer", "minimum": 1, "maximum": 16},
+        "furthestStage": {"$ref": "ConfigPrepareStage"}
+      },
+      "required": ["trigger"],
+      "unevaluatedProperties": false
+    },
+    "ConfigActivation": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "ConfigActivation",
+      "type": "object",
+      "properties": {
+        "policy": {"$ref": "ActivationPolicy"}
+      },
+      "required": ["policy"],
+      "unevaluatedProperties": false
+    },
+    "HostConfig": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "HostConfig",
+      "type": "object",
+      "properties": {
+        "kind": {"$ref": "HostKind"},
+        "enabled": {"type": "boolean"},
+        "root": {"$ref": "RepoPath"},
+        "releaseManifest": {"$ref": "RepoPath"},
+        "allowedOrigins": {
+          "type": "array",
+          "items": {"type": "string"},
+          "maxItems": 16
+        },
+        "prepare": {"$ref": "ConfigPrepare"},
+        "activation": {"$ref": "ConfigActivation"}
+      },
+      "required": ["kind", "releaseManifest"],
+      "unevaluatedProperties": false
+    },
+    "HostConfigMap": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "HostConfigMap",
+      "type": "object",
+      "properties": {},
+      "unevaluatedProperties": {"$ref": "HostConfig"}
+    },
+    "EnvDeclaration": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "EnvDeclaration",
+      "type": "object",
+      "properties": {
+        "env": {"$ref": "EnvKey"},
+        "type": {"$ref": "EnvValueType"},
+        "target": {"$ref": "ConfigTarget"},
+        "required": {"type": "boolean"}
+      },
+      "required": ["env", "type", "target"],
+      "unevaluatedProperties": false
+    },
+    "EnvDeclarationMap": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "EnvDeclarationMap",
+      "type": "object",
+      "properties": {},
+      "unevaluatedProperties": {"$ref": "EnvDeclaration"}
+    },
+    "ConfigExtensions": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "ConfigExtensions",
+      "type": "object",
+      "properties": {},
+      "unevaluatedProperties": {}
+    },
+    "OresWasmConfig": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "OresWasmConfig",
+      "type": "object",
+      "properties": {
+        "version": {"$ref": "ConfigVersion"},
+        "enabled": {"type": "boolean"},
+        "strict": {"type": "boolean"},
+        "hosts": {"$ref": "HostConfigMap"},
+        "env": {"$ref": "EnvDeclarationMap"},
+        "extensions": {"$ref": "ConfigExtensions"}
+      },
+      "required": ["version", "enabled", "hosts"],
+      "unevaluatedProperties": false
+    }
+  }
+}
