@@ -112,10 +112,10 @@ type ConfigExtensions map[string]any
 
 // @config-contract-ir OresWasmConfig model enabled|env|extensions|hosts|strict|version
 type OresWasmConfig struct {
-	Version    ConfigVersion      `json:"version"`
-	Enabled    bool               `json:"enabled"`
-	Strict     *bool              `json:"strict,omitempty"`
-	Hosts      HostConfigMap      `json:"hosts"`
-	Env        EnvDeclarationMap  `json:"env,omitempty"`
-	Extensions ConfigExtensions   `json:"extensions,omitempty"`
+	Version    ConfigVersion     `json:"version"`
+	Enabled    bool              `json:"enabled"`
+	Strict     *bool             `json:"strict,omitempty"`
+	Hosts      HostConfigMap     `json:"hosts"`
+	Env        EnvDeclarationMap `json:"env,omitempty"`
+	Extensions ConfigExtensions  `json:"extensions,omitempty"`
 }
