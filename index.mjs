@@ -1,8 +1,7 @@
-// owls-interfaces — versioned WASM release contracts for browser, Flutter and Rust hosts.
+// owls-interfaces — versioned WASM release and repository configuration contracts.
 //
-// The JSON Schema in `schemas/` is one independent wire authority; `contracts/main.tsp` is its
-// independently authored TypeSpec peer. Hosts validate untrusted JSON with `parseRelease`
-// before use. The schema is loaded from the authoritative file in both Node and browsers.
+// The JSON Schemas in `schemas/` are independent wire authorities; their TypeSpec peers are
+// independently authored under `contracts/`. Hosts validate untrusted data before use.
 
 export {
   LoaderError,
@@ -19,6 +18,12 @@ export {
   stageOf,
   roleOf,
 } from './release.mjs';
+export {
+  configSchema,
+  parseOresWasmConfig,
+  configProblems,
+  resolveOresWasmEnv,
+} from './config.mjs';
 export { validateAgainst } from './validate.mjs';
 
 async function loadReleaseSchema() {
