@@ -159,7 +159,8 @@ class OresWasmConfig {
     EnvDeclarationMap? env,
     ConfigExtensions? extensions,
   })  : hosts = Map<String, HostConfig>.unmodifiable(hosts),
-        env = env == null ? null : Map<String, EnvDeclaration>.unmodifiable(env),
+        env =
+            env == null ? null : Map<String, EnvDeclaration>.unmodifiable(env),
         extensions = extensions == null
             ? null
             : Map<String, Object?>.unmodifiable(extensions);
