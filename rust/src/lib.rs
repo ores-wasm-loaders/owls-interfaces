@@ -1,9 +1,12 @@
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
+pub mod config;
 pub mod v2;
 
 pub const RELEASE_SCHEMA: &str = include_str!("../../schemas/release.schema.json");
+pub const ORES_WASM_CONFIG_SCHEMA: &str =
+    include_str!("../../schemas/ores-wasm-config.schema.json");
 
 /// Legacy v1-compatible projection retained for existing native hosts.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

@@ -8,6 +8,9 @@
     ".": {
       "types": "./typescript/index.d.ts",
       "default": "./index.mjs"
+    },
+    "./config-types": {
+      "types": "./typescript/config.ts"
     }
   },
   "files": [
