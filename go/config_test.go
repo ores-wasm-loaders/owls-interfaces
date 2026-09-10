@@ -81,33 +81,37 @@ func TestConfigProjectionWireShape(t *testing.T) {
 }
 
 func TestConfigEnumWireValues(t *testing.T) {
-	values := map[string]string{
-		string(HostBrowser):          "browser",
-		string(HostSSR):              "ssr",
-		string(HostWorker):           "worker",
-		string(HostRustNative):       "rust-native",
-		string(HostFlutter):          "flutter",
-		string(PrepareExplicit):      "explicit",
-		string(PrepareIntent):        "intent",
-		string(PrepareIdle):          "idle",
-		string(PrepareDisabled):      "disabled",
-		string(ConfigPrepareFetch):   "fetch",
-		string(ConfigPrepareCompile): "compile",
-		string(ActivationExplicit):   "explicit",
-		string(ActivationRoute):      "route",
-		string(ActivationStartup):    "startup",
-		string(ActivationDisabled):   "disabled",
-		string(EnvString):            "string",
-		string(EnvInteger):           "integer",
-		string(EnvBool):              "bool",
-		string(EnvDouble):            "double",
-		string(EnvJSON):              "json",
-		string(EnvArray):             "array",
-		string(EnvMap):               "map",
+	tests := []struct {
+		label string
+		got   string
+		want  string
+	}{
+		{"HostBrowser", string(HostBrowser), "browser"},
+		{"HostSSR", string(HostSSR), "ssr"},
+		{"HostWorker", string(HostWorker), "worker"},
+		{"HostRustNative", string(HostRustNative), "rust-native"},
+		{"HostFlutter", string(HostFlutter), "flutter"},
+		{"PrepareExplicit", string(PrepareExplicit), "explicit"},
+		{"PrepareIntent", string(PrepareIntent), "intent"},
+		{"PrepareIdle", string(PrepareIdle), "idle"},
+		{"PrepareDisabled", string(PrepareDisabled), "disabled"},
+		{"ConfigPrepareFetch", string(ConfigPrepareFetch), "fetch"},
+		{"ConfigPrepareCompile", string(ConfigPrepareCompile), "compile"},
+		{"ActivationExplicit", string(ActivationExplicit), "explicit"},
+		{"ActivationRoute", string(ActivationRoute), "route"},
+		{"ActivationStartup", string(ActivationStartup), "startup"},
+		{"ActivationDisabled", string(ActivationDisabled), "disabled"},
+		{"EnvString", string(EnvString), "string"},
+		{"EnvInteger", string(EnvInteger), "integer"},
+		{"EnvBool", string(EnvBool), "bool"},
+		{"EnvDouble", string(EnvDouble), "double"},
+		{"EnvJSON", string(EnvJSON), "json"},
+		{"EnvArray", string(EnvArray), "array"},
+		{"EnvMap", string(EnvMap), "map"},
 	}
-	for got, want := range values {
-		if got != want {
-			t.Fatalf("wire enum value: got %q, want %q", got, want)
+	for _, test := range tests {
+		if test.got != test.want {
+			t.Fatalf("%s: got %q, want %q", test.label, test.got, test.want)
 		}
 	}
 }
