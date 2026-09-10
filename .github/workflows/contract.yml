@@ -146,7 +146,7 @@ jobs:
           cache: npm
       - name: Install the exact TypeScript compiler
         run: npm ci --ignore-scripts --no-audit --no-fund
-      - name: Compile the TypeScript release projection
+      - name: Compile the TypeScript release and config projections
         run: ./node_modules/.bin/tsc --project typescript/tsconfig.json --pretty false
 
   rust:
@@ -165,7 +165,7 @@ jobs:
       - name: Lint with warnings denied
         working-directory: rust
         run: cargo +1.94.0 clippy --locked --all-targets -- -D warnings
-      - name: Compile and run v1/v2 fixture tests
+      - name: Compile and run release and config projection tests
         working-directory: rust
         run: cargo +1.94.0 test --locked
 
@@ -182,7 +182,7 @@ jobs:
         with:
           go-version: '1.23.2'
           cache: false
-      - name: Check formatting, vet, and fixtures
+      - name: Check formatting, vet, and exercise release/config projections
         working-directory: go
         run: |
           set -euo pipefail
@@ -205,7 +205,7 @@ jobs:
           ref: 05db9689081f091050f01aed79f04dce0c750154
           path: flutter-sdk
           persist-credentials: false
-      - name: Check formatting, analyze, and round-trip fixtures
+      - name: Check formatting, analyze, and exercise release/config projections
         working-directory: dart
         run: |
           set -euo pipefail
@@ -217,6 +217,7 @@ jobs:
           git diff --exit-code -- lib bin
           dart analyze
           dart run bin/fixture_check.dart
+          dart run bin/config_check.dart
 
   gleam:
     runs-on: ubuntu-24.04
@@ -240,7 +241,7 @@ jobs:
           binary="$(find "$directory" -type f -name gleam -perm -u+x | head -n 1)"
           test -n "$binary"
           echo "$(dirname "$binary")" >> "$GITHUB_PATH"
-      - name: Check formatting and compile the Gleam projection
+      - name: Check formatting, compile, and exercise config wire projection
         working-directory: gleam
         run: |
           set -euo pipefail
@@ -248,3 +249,4 @@ jobs:
           gleam format src
           git diff --exit-code -- src
           gleam check
+          gleam run -m owls_config_check
