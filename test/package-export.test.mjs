@@ -15,7 +15,7 @@ test('JavaScript package-name import resolves release and config runtime contrac
   assert.equal(typeof contract.configSchema, 'object');
   assert.ok(Object.isFrozen(contract.configSchema));
 });
-test('published archive includes both peer config authorities and every release projection', () => {
+test('published archive includes both peer authorities and every release/config projection', () => {
   const cwd = fileURLToPath(new URL('../', import.meta.url));
   const [pack] = JSON.parse(execFileSync('npm', ['pack', '--dry-run', '--ignore-scripts', '--json'], {cwd, encoding:'utf8'}));
   const names = pack.files.map(file => file.path);
@@ -30,11 +30,16 @@ test('published archive includes both peer config authorities and every release 
     'contracts/config.tsp',
     'typescript/index.d.ts',
     'typescript/index.ts',
+    'typescript/config.ts',
     'rust/src/lib.rs',
     'rust/src/v2.rs',
+    'rust/src/config.rs',
     'dart/lib/owls_interfaces.dart',
+    'dart/lib/owls_config.dart',
     'go/contract.go',
+    'go/config.go',
     'gleam/src/owls_interfaces.gleam',
+    'gleam/src/owls_config.gleam',
   ]) assert.ok(names.includes(expected), expected);
   assert.ok(!names.some(path => /(^|\/)(node_modules|target|\.git|test|env|\.typespec-json-schema-validator)(\/|$)/.test(path)));
   assert.ok(pack.size < 2 * 1024 * 1024);
