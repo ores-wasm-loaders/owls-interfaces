@@ -29,6 +29,12 @@ enum PrepareTrigger {
   disabled: "disabled",
 }
 
+@id("ConfigPrepareStage")
+enum ConfigPrepareStage {
+  fetch: "fetch",
+  compile: "compile",
+}
+
 @id("ActivationPolicy")
 enum ActivationPolicy {
   explicit: "explicit",
@@ -77,7 +83,7 @@ model ConfigPrepare {
   @maxValue(16)
   maxConcurrency?: int32;
 
-  furthestStage?: PrepareStage;
+  furthestStage?: ConfigPrepareStage;
 }
 
 @id("ConfigActivation")
