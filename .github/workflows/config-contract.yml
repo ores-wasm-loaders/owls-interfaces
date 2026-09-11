@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 env:
-  TSJSV_REF: 03ccc0ecdfc70f9198c3ccf80718910961d3fde1
+  TSJSV_REF: 8bf7ebda4e35c0d11b5b5e5f865867bee4fc3085
 
 jobs:
   peer-authority-parity:
@@ -54,7 +54,7 @@ jobs:
           count="$(find "$corpus" -maxdepth 1 -type f -name '*.json' | wc -l)"
           test "$count" -eq 2
       - name: Generate Schema B, compare peer authorities, and emit Contract IR
-        uses: ORESoftware/typespec-json-schema-validator@03ccc0ecdfc70f9198c3ccf80718910961d3fde1
+        uses: ORESoftware/typespec-json-schema-validator@8bf7ebda4e35c0d11b5b5e5f865867bee4fc3085
         with:
           typespec: contracts/config.tsp
           schema: schemas/ores-wasm-config.schema.json
@@ -65,7 +65,7 @@ jobs:
           max_probes: '96'
           quiet: 'true'
       - name: Verify admitted config scope against current peer sources
-        uses: ORESoftware/typespec-json-schema-validator/actions/verify-contract-ir@03ccc0ecdfc70f9198c3ccf80718910961d3fde1
+        uses: ORESoftware/typespec-json-schema-validator/actions/verify-contract-ir@8bf7ebda4e35c0d11b5b5e5f865867bee4fc3085
         with:
           contract_ir: .typespec-json-schema-validator/config-contract-ir.json
           report: .typespec-json-schema-validator/config-report.json
