@@ -1,0 +1,67 @@
+name: Peer-authority source hygiene
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: peer-authority-hygiene-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  source-hygiene:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out exact repository revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+
+      - name: Verify checked-out revision
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+
+      - name: Require independent authored authorities
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s contracts/config.tsp
+          test -s schemas/ores-wasm-config.schema.json
+          test -s test/fixtures/schema-authority-canary/main.tsp
+          test -s test/fixtures/schema-authority-canary/authored.schema.json
+          grep -Fq 'https://json-schema.org/draft/2020-12/schema' schemas/ores-wasm-config.schema.json
+          grep -Fq 'https://json-schema.org/draft/2020-12/schema' test/fixtures/schema-authority-canary/authored.schema.json
+
+      - name: Keep generated Schema B comparison-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          leaked="$(find . \
+            -path './.git' -prune -o \
+            -path './.typespec-json-schema-validator' -prune -o \
+            -name 'typespec.generated.schema.json' -print -quit)"
+          if [[ -n "$leaked" ]]; then
+            echo "generated Schema B must not be checked in as an authored authority: $leaked" >&2
+            exit 1
+          fi
+
+      - name: Ensure parity workflows remain wired to both authored sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq 'typespec: contracts/config.tsp' .github/workflows/config-contract.yml
+          grep -Fq 'schema: schemas/ores-wasm-config.schema.json' .github/workflows/config-contract.yml
+          grep -Fq 'typespec: test/fixtures/schema-authority-canary/main.tsp' .github/workflows/typespec-json-schema-peer-authority.yml
+          grep -Fq 'schema: test/fixtures/schema-authority-canary/authored.schema.json' .github/workflows/typespec-json-schema-peer-authority.yml
+          grep -Fq 'generated_schema:' .github/workflows/typespec-json-schema-peer-authority.yml
