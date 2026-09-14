@@ -1,0 +1,177 @@
+name: Backfill v0.1.1 Zed release asset
+
+on:
+  push:
+    branches:
+      - DEN-378-backfill-v0-1-1-release
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: backfill-owls-interfaces-v0-1-1
+  cancel-in-progress: false
+
+env:
+  ZED_CLI_SHA: f3123ebebadaede30da97a31a586288c3b15609d
+  PACKAGE_TAG: v0.1.1
+  PACKAGE_VERSION: 0.1.1
+  EXPECTED_COMMIT: 291406191b55606e34b7980b42112e9c77ab690b
+  EXPECTED_SHA256: fea1f81d31f220bc2c4bdb548546b52e4d7c929e12b64b590143fe75b184ae75
+  EXPECTED_SIZE: '5659'
+  DEAD_REGISTRY: https://zed-control-plane-intentionally-unavailable.invalid
+  ZED_PKG_SOURCE_FALLBACK: 'true'
+  ZED_PKG_R2_PUBLIC_BASE: http://127.0.0.1:1
+
+jobs:
+  reconstruct-verify-and-backfill:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Check out owls-interfaces with tags
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify immutable tag provenance before any write
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          actual="$(git rev-parse "${PACKAGE_TAG}^{commit}")"
+          test "$actual" = "$EXPECTED_COMMIT"
+          test "$(git cat-file -t "$PACKAGE_TAG")" = commit
+
+      - name: Check out exact zed-cli recovery candidate
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: zed-pkg/zed-cli
+          ref: ${{ env.ZED_CLI_SHA }}
+          path: product/zed-cli
+          fetch-depth: 1
+          persist-credentials: false
+          show-progress: false
+
+      - name: Install pinned Rust toolchain
+        uses: dtolnay/rust-toolchain@4be7066ada62dd38de10e7b70166bc74ed198c30
+        with:
+          toolchain: '1.98.1'
+
+      - name: Build exact zed-cli candidate
+        working-directory: product/zed-cli
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          test "$(git rev-parse HEAD)" = "$ZED_CLI_SHA"
+          cargo build --locked --release --bin zed
+
+      - name: Reconstruct canonical artifact through GitHub-only recovery
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          ZED="$GITHUB_WORKSPACE/product/zed-cli/target/release/zed"
+          HOME_DIR="$RUNNER_TEMP/zed-home-reconstruct"
+          mkdir -p "$RUNNER_TEMP/consumer"
+          cat > "$RUNNER_TEMP/consumer/.zpkg.toml" <<'EOF'
+          [package]
+          org = "ores-wasm-loaders"
+          name = "owls-interfaces-backfill-consumer"
+          version = "0.0.0"
+          description = "One-shot release backfill verifier"
+
+          [install]
+          dir = "zed_modules"
+          adapter = "none"
+
+          [dependencies]
+          "ores-wasm-loaders/owls-interfaces" = "=0.1.1"
+          EOF
+
+          unset GITHUB_TOKEN GH_TOKEN ZED_PKG_GITHUB_TOKEN || true
+          (
+            cd "$RUNNER_TEMP/consumer"
+            "$ZED" --registry "$DEAD_REGISTRY" --home "$HOME_DIR" install \
+              --install-mode copy --adapter none --allow-ecosystem-mismatch
+          ) 2>&1 | tee "$RUNNER_TEMP/reconstruct.log"
+
+          LOCK="$RUNNER_TEMP/consumer/.zpkg.lock"
+          test -s "$LOCK"
+          grep -Fq "sha256 = \"$EXPECTED_SHA256\"" "$LOCK"
+          grep -Fq "vcs_tag = \"$PACKAGE_TAG\"" "$LOCK"
+          grep -Fq "vcs_commit = \"$EXPECTED_COMMIT\"" "$LOCK"
+
+          ARTIFACT="$RUNNER_TEMP/zpkg-${EXPECTED_SHA256}.tar.gz"
+          : > "$RUNNER_TEMP/artifact-match"
+          while IFS= read -r -d '' candidate; do
+            actual="$(sha256sum "$candidate" | awk '{print $1}')"
+            if [[ "$actual" == "$EXPECTED_SHA256" ]]; then
+              cp "$candidate" "$ARTIFACT"
+              printf '%s\n' "$candidate" > "$RUNNER_TEMP/artifact-match"
+              break
+            fi
+          done < <(find "$HOME_DIR" -type f -print0)
+          test -s "$ARTIFACT"
+          test "$(stat -c %s "$ARTIFACT")" = "$EXPECTED_SIZE"
+          test "$(sha256sum "$ARTIFACT" | awk '{print $1}')" = "$EXPECTED_SHA256"
+
+      - name: Create release and upload only verified bytes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          ASSET="zpkg-${EXPECTED_SHA256}.tar.gz"
+          ARTIFACT="$RUNNER_TEMP/$ASSET"
+
+          if ! gh release view "$PACKAGE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$PACKAGE_TAG" \
+              --repo "$GITHUB_REPOSITORY" \
+              --verify-tag \
+              --title "$PACKAGE_TAG" \
+              --notes "Backfilled Zed package artifact for ${PACKAGE_VERSION}. Provenance: tag ${PACKAGE_TAG} -> ${EXPECTED_COMMIT}; artifact sha256 ${EXPECTED_SHA256}."
+          fi
+
+          existing="$(gh release view "$PACKAGE_TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name')"
+          if printf '%s\n' "$existing" | grep -Fxq "$ASSET"; then
+            mkdir -p "$RUNNER_TEMP/existing"
+            gh release download "$PACKAGE_TAG" --repo "$GITHUB_REPOSITORY" --pattern "$ASSET" --dir "$RUNNER_TEMP/existing"
+            test "$(sha256sum "$RUNNER_TEMP/existing/$ASSET" | awk '{print $1}')" = "$EXPECTED_SHA256"
+          else
+            gh release upload "$PACKAGE_TAG" "$ARTIFACT#$ASSET" --repo "$GITHUB_REPOSITORY"
+          fi
+
+      - name: Verify release bytes and GitHub-only frozen recovery
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          ASSET="zpkg-${EXPECTED_SHA256}.tar.gz"
+          mkdir -p "$RUNNER_TEMP/verify-release"
+          gh release download "$PACKAGE_TAG" --repo "$GITHUB_REPOSITORY" --pattern "$ASSET" --dir "$RUNNER_TEMP/verify-release"
+          test "$(sha256sum "$RUNNER_TEMP/verify-release/$ASSET" | awk '{print $1}')" = "$EXPECTED_SHA256"
+          test "$(stat -c %s "$RUNNER_TEMP/verify-release/$ASSET")" = "$EXPECTED_SIZE"
+
+          ZED="$GITHUB_WORKSPACE/product/zed-cli/target/release/zed"
+          unset GITHUB_TOKEN GH_TOKEN ZED_PKG_GITHUB_TOKEN || true
+          rm -rf "$RUNNER_TEMP/zed-home-frozen" "$RUNNER_TEMP/consumer/zed_modules"
+          (
+            cd "$RUNNER_TEMP/consumer"
+            "$ZED" --registry "$DEAD_REGISTRY" --home "$RUNNER_TEMP/zed-home-frozen" install --frozen \
+              --install-mode copy --adapter none --allow-ecosystem-mismatch
+          ) 2>&1 | tee "$RUNNER_TEMP/frozen-after-release.log"
+          test "$(find "$RUNNER_TEMP/consumer/zed_modules" -name .zpkg.toml -type f | wc -l | tr -d ' ')" -ge 1
+
+      - name: Retain sanitized evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: owls-interfaces-v0-1-1-backfill-${{ github.run_id }}-${{ github.run_attempt }}
+          if-no-files-found: warn
+          retention-days: 14
+          path: |
+            ${{ runner.temp }}/consumer/.zpkg.lock
+            ${{ runner.temp }}/reconstruct.log
+            ${{ runner.temp }}/frozen-after-release.log
+            ${{ runner.temp }}/artifact-match
