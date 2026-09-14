@@ -80,6 +80,10 @@ jobs:
           version = "0.0.0"
           description = "One-shot release backfill verifier"
 
+          [package.repository]
+          vcs = "git"
+          url = "https://github.com/ores-wasm-loaders/owls-interfaces"
+
           [install]
           dir = "zed_modules"
           adapter = "none"
