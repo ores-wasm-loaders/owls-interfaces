@@ -9,10 +9,17 @@ license = "MIT"
 vcs = "git"
 url = "https://github.com/ores-wasm-loaders/owls-interfaces"
 
+[dependencies]
+"oresoftware/typespec-json-schema-validator" = "^0.1.0"
+"oresoftware/api-docs" = "^2.0.2"
+
 [targets.repository]
 dir = "."
+
 [install]
+dir = ".vendor/.zed"
 adapter = "none"
+
 [publish]
 include_readme = true
-exclude = [".ores/**", ".zed/**", ".zed-pack/**", "zed_modules/**", "node_modules/**", "**/target/**", "**/.dart_tool/**", "**/build/**"]
+exclude = [".ores/**", ".zed/**", ".zed-pack/**", ".vendor/**", "zed_modules/**", "node_modules/**", "**/target/**", "**/.dart_tool/**", "**/build/**"]
