@@ -10,7 +10,6 @@ vcs = "git"
 url = "https://github.com/ores-wasm-loaders/owls-interfaces"
 
 [dependencies]
-"oresoftware/typespec-json-schema-validator" = "^0.1.0"
 "oresoftware/api-docs" = "^2.0.2"
 
 [targets.repository]
