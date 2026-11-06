@@ -1,0 +1,21 @@
+name: OWLS v2 bounded activation reference
+on:
+  pull_request:
+    paths: ['formal/**', 'attolang/**', '.github/workflows/owls-release-formal.yml']
+  push:
+    branches: [main]
+    paths: ['formal/**', 'attolang/**', '.github/workflows/owls-release-formal.yml']
+permissions:
+  contents: read
+jobs:
+  bounded_reference:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - name: Exhaustively check bounded release activation policy and negative mutant
+        run: python3 formal/check_release_activation.py
+      - name: Do not confuse source presence with AttoLang execution
+        run: |
+          test -s attolang/release_activation.atto
+          echo 'ATTOLANG_GUEST_EXECUTION=NOT_EXECUTED'

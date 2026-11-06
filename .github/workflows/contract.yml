@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 env:
-  TSJSV_REF: 7b1e79a32b89006a6eb6642ccd71ef25ffac0103
+  TSJSV_REF: b750f54bdf0827f52cdc39a0dd2ab42991c1772c
 
 jobs:
   node:
@@ -72,7 +72,7 @@ jobs:
           count="$(find "$corpus" -maxdepth 1 -type f -name '*.json' | wc -l)"
           test "$count" -eq 4
       - name: Generate Schema B, compare both authorities, and emit Contract IR
-        uses: ORESoftware/typespec-json-schema-validator@7b1e79a32b89006a6eb6642ccd71ef25ffac0103
+        uses: ORESoftware/typespec-json-schema-validator@b750f54bdf0827f52cdc39a0dd2ab42991c1772c
         with:
           typespec: contracts/main.tsp
           schema: schemas/release.schema.json
@@ -83,7 +83,7 @@ jobs:
           max_probes: '96'
           quiet: 'true'
       - name: Canonically verify Contract IR against current sources and complete scope
-        uses: ORESoftware/typespec-json-schema-validator/actions/verify-contract-ir@7b1e79a32b89006a6eb6642ccd71ef25ffac0103
+        uses: ORESoftware/typespec-json-schema-validator/actions/verify-contract-ir@b750f54bdf0827f52cdc39a0dd2ab42991c1772c
         with:
           contract_ir: .typespec-json-schema-validator/contract-ir.json
           report: .typespec-json-schema-validator/report.json
