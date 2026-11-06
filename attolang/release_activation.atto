@@ -1,0 +1,33 @@
+// AttoLang source-level candidate for OWLS release-v2 activation.
+// This function is a pure policy gate, not a WASM runtime or JSON schema validator.
+pub fnc may_activate_owls(
+  bool release_host_compatible,
+  bool canonical_origin,
+  bool allowlisted_origin,
+  bool digest_matches,
+  bool content_type_matches,
+  bool bytes_bounded,
+  bool entrypoint_valid,
+  bool prepare_budget_bounded,
+  bool user_started
+): bool {
+  if !release_host_compatible; do return false; fi
+  if !canonical_origin; do return false; fi
+  if !allowlisted_origin; do return false; fi
+  if !digest_matches; do return false; fi
+  if !content_type_matches; do return false; fi
+  if !bytes_bounded; do return false; fi
+  if !entrypoint_valid; do return false; fi
+  if !prepare_budget_bounded; do return false; fi
+  if !user_started; do return false; fi
+  return true;
+}
+
+pub fnc test_owls_release_activation(): bool {
+  if !may_activate_owls(true, true, true, true, true, true, true, true, true); do return false; fi
+  if may_activate_owls(true, true, true, true, true, true, true, true, false); do return false; fi
+  if may_activate_owls(true, true, true, false, true, true, true, true, true); do return false; fi
+  if may_activate_owls(false, true, true, true, true, true, true, true, true); do return false; fi
+  if may_activate_owls(true, true, true, true, true, false, true, true, true); do return false; fi
+  return true;
+}
